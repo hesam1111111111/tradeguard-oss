@@ -24,6 +24,12 @@ class JournalMetrics:
     worst_trade: float | None
 
 
+@dataclass(frozen=True, slots=True)
+class JournalSegment:
+    key: str
+    metrics: JournalMetrics
+
+
 def _max_drawdown(pnls: list[float]) -> float:
     equity = 0.0
     peak = 0.0
@@ -62,3 +68,23 @@ def analyze_trades(trades: Iterable[Trade]) -> JournalMetrics:
         best_trade=max(pnls) if pnls else None,
         worst_trade=min(pnls) if pnls else None,
     )
+
+
+def analyze_by_symbol(trades: Iterable[Trade]) -> tuple[JournalSegment, ...]:
+    """Return metrics grouped by normalized symbol in deterministic key order."""
+    groups: dict[str, list[Trade]] = {}
+    for trade in trades:
+        symbol = trade.symbol.strip().upper()
+        if not symbol:
+            raise ValueError("trade.symbol must not be empty")
+        groups.setdefault(symbol, []).append(trade)
+    return tuple(JournalSegment(key, analyze_trades(groups[key])) for key in sorted(groups))
+
+
+def analyze_by_side(trades: Iterable[Trade]) -> tuple[JournalSegment, ...]:
+    """Return metrics grouped by normalized long/short side in deterministic key order."""
+    groups: dict[str, list[Trade]] = {}
+    for trade in trades:
+        side = trade.normalized_side
+        groups.setdefault(side, []).append(trade)
+    return tuple(JournalSegment(key, analyze_trades(groups[key])) for key in sorted(groups))
