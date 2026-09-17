@@ -1,5 +1,10 @@
 # TradeGuard OSS
 
+[![CI](https://github.com/hesam1111111111/tradeguard-oss/actions/workflows/ci.yml/badge.svg)](https://github.com/hesam1111111111/tradeguard-oss/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/hesam1111111111/tradeguard-oss)](https://github.com/hesam1111111111/tradeguard-oss/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10–3.13](https://img.shields.io/badge/Python-3.10%E2%80%933.13-blue.svg)](.github/workflows/ci.yml)
+
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
 > Status: active early development (`v0.7.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
@@ -145,12 +150,14 @@ Near-term work includes additional offline import adapters, stronger source-data
 
 ## Contributing
 
-Contributions are welcome. Please read `CONTRIBUTING.md`, open an issue for material changes, and include tests for behavioral changes.
+Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md), follow the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), open an issue for material changes, and include tests for behavioral changes.
+
+Repository-maintainer review criteria and evidence are tracked in [`docs/oss-application-readiness.md`](docs/oss-application-readiness.md).
 
 ## Security and privacy
 
-TradeGuard does not require API keys for its core journal analytics. Do not commit broker credentials, exchange keys, private trade exports, or personal financial data. See `SECURITY.md`.
+TradeGuard does not require API keys for its core journal analytics. Do not commit broker credentials, exchange keys, private trade exports, or personal financial data. See [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](LICENSE).
