@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict
+from math import isfinite
 from pathlib import Path
 
 from .analytics import analyze_by_side, analyze_by_symbol, analyze_trades
@@ -42,8 +43,8 @@ def _risk_payload(trades, limits: RiskLimits | None, budget: RiskBudget | None) 
 
 def _segments_payload(trades) -> dict:
     return {
-        "by_symbol": {key: asdict(value) for key, value in analyze_by_symbol(trades).items()},
-        "by_side": {key: asdict(value) for key, value in analyze_by_side(trades).items()},
+        "by_symbol": {segment.key: asdict(segment.metrics) for segment in analyze_by_symbol(trades)},
+        "by_side": {segment.key: asdict(segment.metrics) for segment in analyze_by_side(trades)},
     }
 
 
@@ -66,8 +67,11 @@ def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskB
 
 
 def _positive_finite(value: str) -> float:
-    number = float(value)
-    if number <= 0 or number != number or number in (float("inf"), float("-inf")):
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a positive finite number") from exc
+    if not isfinite(number) or number <= 0:
         raise argparse.ArgumentTypeError("must be a positive finite number")
     return number
 
