@@ -4,7 +4,11 @@
 [![Latest release](https://img.shields.io/github/v/release/hesam1111111111/tradeguard-oss)](https://github.com/hesam1111111111/tradeguard-oss/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10–3.13](https://img.shields.io/badge/Python-3.10%E2%80%933.13-blue.svg)](.github/workflows/ci.yml)
+## Install
 
+```bash
+pip install tradeguard-oss
+```
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
 > Status: active early development (`v0.7.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
