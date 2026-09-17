@@ -6,6 +6,31 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-17
+
+### Added
+- Positive, finite validation for configured notional limits and direct risk API inputs.
+- Explicit stop-based initial-risk analysis, kept distinct from notional exposure.
+- Structured diagnostics for trades whose initial risk cannot be measured.
+- Additive machine-readable `risk` section in `tradeguard.report.v1` reports.
+- Historical entry-notional exposure details and deterministic risk-limit breaches in JSON reports.
+- CLI flags for portfolio, symbol, and per-trade notional limits.
+- Regression coverage for invalid numeric inputs, initial-risk semantics, report compatibility, deterministic export, and CLI limits.
+
+### Changed
+- Direct risk APIs no longer hide invalid entry or quantity values through absolute-value normalization.
+- Blank symbols and invalid sides fail explicitly during exposure aggregation.
+- Risk reporting is suppressed with metrics when blocking journal integrity or validation errors are present.
+- Public package exports include the v0.4.0 initial-risk API.
+
+### Compatibility
+- The report identifier remains `tradeguard.report.v1`; the new top-level `risk` member is additive and existing top-level fields are retained.
+
+### Scope
+- Notional exposure is historical entry-price notional, not live mark-to-market exposure.
+- Initial risk is stop-based risk at entry and is never conflated with notional exposure.
+- TradeGuard remains an analytics, validation, and risk-analysis toolkit; it does not connect to brokers or execute orders.
+
 ## [0.3.0] - 2026-09-17
 
 ### Added
