@@ -2,7 +2,7 @@
 
 ## Scope
 
-TradeGuard OSS currently performs local journal parsing, validation, and analytics. The core package does not require broker or exchange credentials.
+TradeGuard OSS performs local journal parsing, validation, deterministic analytics, historical risk analysis, mapped CSV importing, and report generation. The core package does not require broker or exchange credentials and does not place orders.
 
 ## Sensitive data
 
@@ -10,8 +10,8 @@ Do not include API keys, access tokens, passwords, account identifiers, private 
 
 ## Reporting a vulnerability
 
-If a security issue could expose credentials, private financial data, or enable unsafe execution behavior, do not publish exploit details in a public issue. Contact the repository maintainer privately through an appropriate GitHub-supported channel until a dedicated security advisory workflow is configured.
+If a security issue could expose credentials, private financial data, corrupt report integrity, or enable unsafe behavior, do not publish exploit details in a public issue. Contact the repository maintainer privately through an appropriate GitHub-supported channel until a dedicated security advisory workflow is configured.
 
 ## Execution boundary
 
-TradeGuard OSS v0.1.x does not place orders and should not be treated as an execution or portfolio-risk control system.
+TradeGuard OSS is a historical/local-file analytics toolkit. It is not a broker connector, live account synchronization service, trading signal engine, or order-execution system. Security claims and tests should be evaluated within that boundary.
