@@ -41,5 +41,5 @@ jobs:
         run: |
           python -m venv /tmp/tradeguard-wheel-smoke
           /tmp/tradeguard-wheel-smoke/bin/pip install dist/*.whl
-          /tmp/tradeguard-wheel-smoke/bin/python -c "import tradeguard; assert tradeguard.__version__ == '0.5.0'"
+          /tmp/tradeguard-wheel-smoke/bin/python -c "from importlib.metadata import version; import tradeguard; assert tradeguard.__version__ == version('tradeguard-oss')"
           /tmp/tradeguard-wheel-smoke/bin/tradeguard --help

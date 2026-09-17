@@ -6,6 +6,48 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-17
+
+### Added
+- Deterministic temporal analytics grouped by recorded `closed_at` calendar day or month.
+- Explicit `missing_closed_at` diagnostics and measured-trade counts for incomplete temporal coverage.
+- Additive temporal report output under `segments.by_closed_period` in `tradeguard.report.v1`.
+- CLI temporal grouping through `--group-closed-by day|month`.
+- Formal `tradeguard.report.v1` compatibility documentation covering additive fields, nullability, deterministic ordering, and timezone semantics.
+- Dedicated report-contract regression tests ensuring temporal analytics do not mutate established v1 metrics, risk, symbol, or side sections.
+- Public temporal-analysis API exports: `TemporalAnalysis`, `TemporalDiagnostic`, and `analyze_by_closed_period`.
+
+### Compatibility
+- `tradeguard.report.v1` remains the report schema identifier.
+- Temporal report data is strictly additive and is omitted unless explicitly requested.
+- Existing invalid-journal behavior remains unchanged: unsafe metrics, risk, and segments are suppressed rather than fabricated.
+
+### Scope
+- Temporal grouping uses recorded `closed_at` values exactly as supplied and does not infer or convert timezones.
+- TradeGuard remains historical journal analytics only; no broker connectivity, credentials, live mark-to-market state, or order execution are included.
+
+## [0.5.0] - 2026-09-17
+
+### Added
+- Validated stop-based `RiskBudget` configuration for per-trade and aggregate journal risk budgets.
+- Structured deterministic risk-budget breaches and explicit diagnostics for trades whose stop-based initial risk cannot be measured.
+- Deterministic segmented analytics by normalized symbol and side.
+- Additive machine-readable risk-budget and segmented-analytics output in `tradeguard.report.v1`.
+- CLI flags `--max-trade-initial-risk` and `--max-total-initial-risk`.
+- Distribution build and isolated wheel smoke-install validation in CI.
+
+### Changed
+- CLI risk-limit inputs reject zero, negative, NaN, and infinite values cleanly.
+- Missing or unusable stop data never silently becomes zero risk; incomplete aggregate risk-budget evaluation remains explicit.
+- Public package exports include the v0.5.0 risk-budget and segmentation APIs.
+
+### Compatibility
+- `tradeguard.report.v1` remains stable; v0.5 fields are additive.
+- Historical entry-notional exposure remains separate from stop-based initial risk.
+
+### Scope
+- TradeGuard remains an analytics, validation, and historical risk-analysis toolkit; it does not connect to brokers or execute orders.
+
 ## [0.4.0] - 2026-09-17
 
 ### Added
