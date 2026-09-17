@@ -2,21 +2,23 @@
 
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking basic risk hygiene, and computing reproducible performance metrics from closed trades.
 
-> Status: early development (`v0.1.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.2.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
-Trading journals often contain missing stop losses, inconsistent direction labels, invalid timestamps, incomplete position sizing, or performance statistics that cannot be reproduced. TradeGuard provides a small, dependency-light Python core that turns those checks into testable rules.
+Trading journals often contain missing stop losses, inconsistent direction labels, invalid timestamps, incomplete position sizing, or performance statistics that cannot be reproduced. TradeGuard provides a small, dependency-light Python core that turns those checks into testable rules and deterministic reports.
 
 ## Current capabilities
 
-- CSV journal ingestion
+- Versioned CSV journal schema and row-level diagnostics
 - Long/short PnL calculation
 - Initial risk and R-multiple calculation
-- Win rate, net PnL, expectancy, gross profit/loss
+- Win rate, net PnL, expectancy, gross profit/loss and profit factor
+- Breakeven count and best/worst closed-trade PnL
 - Closed-trade maximum drawdown
 - Stop-loss and data-quality validation
-- Human-readable or JSON CLI output
+- Human-readable or versioned JSON CLI output
+- Deterministic JSON report export
 - Automated tests across Python 3.10–3.13
 
 ## Install for development
@@ -55,10 +57,25 @@ ETHUSDT,short,3200,3100,3260,1.0,2026-01-02T09:00:00,2026-01-02T12:00:00
 
 ## CLI
 
+Human-readable report:
+
 ```bash
 tradeguard examples/sample_journal.csv
+```
+
+JSON to stdout:
+
+```bash
 tradeguard examples/sample_journal.csv --json
 ```
+
+Write a deterministic, machine-readable report:
+
+```bash
+tradeguard examples/sample_journal.csv --output report.json
+```
+
+The report includes a stable top-level schema identifier (`tradeguard.report.v1`), source path, metrics, and validation issues. Metrics are skipped when validation contains errors rather than silently calculating statistics from invalid data.
 
 ## Python API
 
@@ -73,9 +90,13 @@ print(analyze_trades(trades))
 print(validate_trades(trades))
 ```
 
+## Development policy
+
+Behavioral changes should arrive through scoped branches and pull requests with regression tests. CI runs the test suite across supported Python versions before changes are merged. Public examples must be synthetic or privacy-safe.
+
 ## Roadmap
 
-Near-term work includes schema versioning, richer journal diagnostics, broker/export adapters, deterministic report export, additional risk metrics, and privacy-safe sample datasets. See open issues for scoped work.
+Near-term work includes broker/export adapters, richer portfolio-risk diagnostics, report compatibility guarantees, privacy-safe sample datasets, packaging/release automation, and additional tests. See open issues for scoped work.
 
 ## Contributing
 
