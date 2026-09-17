@@ -1,6 +1,9 @@
 from pathlib import Path
 
+import pytest
+
 from tradeguard.io import load_trades_csv
+from tradeguard.schema import SCHEMA_VERSION, validate_columns
 
 
 def test_load_trades_csv(tmp_path: Path):
@@ -16,3 +19,18 @@ def test_load_trades_csv(tmp_path: Path):
     assert trades[0].symbol == "BTCUSDT"
     assert trades[0].quantity == 2
     assert trades[0].pnl == 20
+
+
+def test_schema_reports_missing_required_columns():
+    assert SCHEMA_VERSION == "1.0"
+    assert validate_columns(["symbol", "entry"]) == ["side", "exit"]
+
+
+def test_csv_reports_physical_row_for_invalid_number(tmp_path: Path):
+    csv_file = tmp_path / "bad.csv"
+    csv_file.write_text(
+        "symbol,side,entry,exit\nBTCUSDT,long,not-a-number,110\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="CSV row 2"):
+        load_trades_csv(csv_file)

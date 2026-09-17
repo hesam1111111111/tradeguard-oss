@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .models import Trade
+from .schema import validate_columns
 
 
 def _parse_optional_datetime(value: str | None) -> datetime | None:
@@ -17,24 +18,26 @@ def load_trades_csv(path: str | Path) -> list[Trade]:
     trades: list[Trade] = []
     with Path(path).open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
-        required = {"symbol", "side", "entry", "exit"}
-        missing = required.difference(reader.fieldnames or [])
+        missing = validate_columns(reader.fieldnames or [])
         if missing:
-            raise ValueError(f"Missing required CSV columns: {', '.join(sorted(missing))}")
+            raise ValueError(f"Missing required CSV columns: {', '.join(missing)}")
 
-        for row in reader:
-            stop_loss = row.get("stop_loss")
-            quantity = row.get("quantity")
-            trades.append(
-                Trade(
-                    symbol=(row.get("symbol") or "").strip(),
-                    side=(row.get("side") or "").strip(),
-                    entry=float(row["entry"]),
-                    exit=float(row["exit"]),
-                    stop_loss=float(stop_loss) if stop_loss else None,
-                    quantity=float(quantity) if quantity else 1.0,
-                    opened_at=_parse_optional_datetime(row.get("opened_at")),
-                    closed_at=_parse_optional_datetime(row.get("closed_at")),
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                stop_loss = row.get("stop_loss")
+                quantity = row.get("quantity")
+                trades.append(
+                    Trade(
+                        symbol=(row.get("symbol") or "").strip(),
+                        side=(row.get("side") or "").strip(),
+                        entry=float(row["entry"]),
+                        exit=float(row["exit"]),
+                        stop_loss=float(stop_loss) if stop_loss else None,
+                        quantity=float(quantity) if quantity else 1.0,
+                        opened_at=_parse_optional_datetime(row.get("opened_at")),
+                        closed_at=_parse_optional_datetime(row.get("closed_at")),
+                    )
                 )
-            )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Invalid value in CSV row {row_number}: {exc}") from exc
     return trades
