@@ -6,7 +6,7 @@ from dataclasses import asdict
 from math import isfinite
 from pathlib import Path
 
-from .analytics import analyze_by_side, analyze_by_symbol, analyze_trades
+from .analytics import analyze_by_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .diagnostics import diagnose_journal
 from .io import load_trades_csv
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
@@ -22,33 +22,32 @@ def _risk_payload(trades, limits: RiskLimits | None, budget: RiskBudget | None) 
     return {
         "exposure_basis": "historical_entry_notional",
         "exposures": [asdict(item) | {"gross_notional": item.gross_notional, "net_notional": item.net_notional} for item in exposures],
-        "initial_risk": {
-            "basis": "stop_based_risk_at_entry",
-            "total_initial_risk": initial.total_initial_risk,
-            "measured_trades": initial.measured_trades,
-            "diagnostics": [asdict(item) for item in initial.diagnostics],
-        },
+        "initial_risk": {"basis": "stop_based_risk_at_entry", "total_initial_risk": initial.total_initial_risk, "measured_trades": initial.measured_trades, "diagnostics": [asdict(item) for item in initial.diagnostics]},
         "limits": asdict(limits) if limits is not None else None,
         "breaches": [asdict(item) for item in breaches],
-        "budget": None if budget_result is None else {
-            "configuration": asdict(budget),
-            "total_initial_risk": budget_result.total_initial_risk,
-            "measured_trades": budget_result.measured_trades,
-            "complete": not budget_result.diagnostics,
-            "diagnostics": [asdict(item) for item in budget_result.diagnostics],
-            "breaches": [asdict(item) for item in budget_result.breaches],
-        },
+        "budget": None if budget_result is None else {"configuration": asdict(budget), "total_initial_risk": budget_result.total_initial_risk, "measured_trades": budget_result.measured_trades, "complete": not budget_result.diagnostics, "diagnostics": [asdict(item) for item in budget_result.diagnostics], "breaches": [asdict(item) for item in budget_result.breaches]},
     }
 
 
-def _segments_payload(trades) -> dict:
-    return {
+def _segments_payload(trades, temporal_group: str | None = None) -> dict:
+    payload = {
         "by_symbol": {segment.key: asdict(segment.metrics) for segment in analyze_by_symbol(trades)},
         "by_side": {segment.key: asdict(segment.metrics) for segment in analyze_by_side(trades)},
     }
+    if temporal_group is not None:
+        temporal = analyze_by_period(trades, temporal_group)
+        payload["temporal"] = {
+            "basis": "recorded_closed_at_calendar_period",
+            "period": temporal.period,
+            "complete": temporal.complete,
+            "measured_trades": temporal.measured_trades,
+            "segments": {segment.key: asdict(segment.metrics) for segment in temporal.segments},
+            "diagnostics": [asdict(item) for item in temporal.diagnostics],
+        }
+    return payload
 
 
-def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None) -> dict:
+def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_group: str | None = None) -> dict:
     trades = load_trades_csv(csv_path)
     diagnostics = diagnose_journal(trades)
     valid = diagnostics.valid_for_metrics
@@ -62,7 +61,7 @@ def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskB
         "issues": diagnostics_payload["validation_issues"],
         "diagnostics": diagnostics_payload,
         "risk": _risk_payload(trades, limits, budget) if valid else None,
-        "segments": _segments_payload(trades) if valid else None,
+        "segments": _segments_payload(trades, temporal_group) if valid else None,
     }
 
 
@@ -81,6 +80,7 @@ def main() -> None:
     parser.add_argument("csv_path", help="Path to the trading journal CSV file")
     parser.add_argument("--json", action="store_true", help="Emit JSON output")
     parser.add_argument("--output", help="Write the deterministic JSON report to a file")
+    parser.add_argument("--group-by-time", choices=("day", "month"), help="Add closed_at calendar-period analytics")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
     parser.add_argument("--max-symbol-gross-notional", type=_positive_finite)
     parser.add_argument("--max-trade-notional", type=_positive_finite)
@@ -92,7 +92,7 @@ def main() -> None:
     limits = RiskLimits(args.max_gross_notional, args.max_symbol_gross_notional, args.max_trade_notional) if any(v is not None for v in limit_values) else None
     budget_values = (args.max_trade_initial_risk, args.max_total_initial_risk)
     budget = RiskBudget(args.max_trade_initial_risk, args.max_total_initial_risk) if any(v is not None for v in budget_values) else None
-    payload = build_payload(args.csv_path, limits=limits, budget=budget)
+    payload = build_payload(args.csv_path, limits=limits, budget=budget, temporal_group=args.group_by_time)
 
     if args.output:
         Path(args.output).write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
@@ -121,6 +121,9 @@ def main() -> None:
         print(f"Risk-limit breaches: {len(risk['breaches'])}")
         if risk["budget"] is not None:
             print(f"Risk-budget breaches: {len(risk['budget']['breaches'])}")
+        temporal = payload["segments"].get("temporal")
+        if temporal is not None:
+            print(f"Temporal coverage: {temporal['measured_trades']}/{metrics['trades']} ({temporal['period']})")
     print(f"Validation issues: {len(issues)}")
     print(f"Exact duplicates: {diagnostics['duplicate_count']}")
     for issue in issues:
