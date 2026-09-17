@@ -11,7 +11,11 @@ requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "TradeGuard OSS contributors"}]
 dependencies = []
-
+[project.urls]
+Homepage = "https://github.com/hesam1111111111/tradeguard-oss"
+Repository = "https://github.com/hesam1111111111/tradeguard-oss"
+Issues = "https://github.com/hesam1111111111/tradeguard-oss/issues"
+Changelog = "https://github.com/hesam1111111111/tradeguard-oss/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "build>=1.2"]
 
