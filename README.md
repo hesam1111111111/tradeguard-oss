@@ -2,7 +2,7 @@
 
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.5.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.6.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
@@ -21,9 +21,10 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Stop-based historical risk budgets with explicit incomplete-data diagnostics
 - Deterministic segmented analytics by symbol and side
 - Optional deterministic closed-at grouping by calendar day or month
+- Stable additive `tradeguard.report.v1` contract with explicit compatibility rules
 - Human-readable or versioned JSON CLI output
 - Deterministic JSON report export
-- Automated tests across Python 3.10–3.13
+- Automated tests across Python 3.10–3.13 plus distribution wheel smoke-install validation
 
 ## Install for development
 
@@ -97,6 +98,7 @@ from tradeguard import (
     RiskLimits,
     Trade,
     aggregate_exposure,
+    analyze_by_closed_period,
     analyze_trades,
     check_risk_limits,
     journal_fingerprint,
@@ -110,6 +112,7 @@ trades = [
 print(validate_trades(trades))
 print(journal_fingerprint(trades))
 print(analyze_trades(trades))
+print(analyze_by_closed_period(trades, "month"))
 print(aggregate_exposure(trades))
 print(check_risk_limits(trades, RiskLimits(max_gross_notional=10000)))
 ```
@@ -118,13 +121,17 @@ print(check_risk_limits(trades, RiskLimits(max_gross_notional=10000)))
 
 `aggregate_exposure` and notional risk limits use absolute `entry * quantity` values from the supplied journal. They describe historical entry-notional concentration; they are **not** live positions, mark-to-market exposure, margin usage, or broker account state.
 
+### Temporal semantics
+
+Temporal grouping uses the recorded `closed_at` value exactly as supplied. TradeGuard does not guess or convert timezones; callers combining timestamps from different zones should normalize them before calendar grouping.
+
 ## Development policy
 
 Behavioral changes should arrive through scoped branches and pull requests with regression tests. CI runs the test suite across supported Python versions before changes are merged. Public examples must be synthetic or privacy-safe.
 
 ## Roadmap
 
-Near-term work includes report compatibility guarantees, privacy-safe sample datasets, additional import adapters, and deeper risk diagnostics. Live brokerage connectivity and order execution are outside the current core scope.
+Near-term work includes privacy-safe sample datasets, additional import adapters, stronger data-integrity diagnostics, and broader report-consumer fixtures. Live brokerage connectivity and order execution are outside the current core scope.
 
 ## Contributing
 
