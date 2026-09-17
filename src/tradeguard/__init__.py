@@ -1,6 +1,6 @@
 """TradeGuard OSS public package."""
 
-from .analytics import JournalMetrics, analyze_trades
+from .analytics import JournalMetrics, JournalSegment, analyze_by_side, analyze_by_symbol, analyze_trades
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
 from .risk import (
@@ -8,10 +8,14 @@ from .risk import (
     InitialRiskAnalysis,
     InitialRiskDiagnostic,
     RiskBreach,
+    RiskBudget,
+    RiskBudgetBreach,
+    RiskBudgetEvaluation,
     RiskLimits,
     aggregate_exposure,
     analyze_initial_risk,
     check_risk_limits,
+    evaluate_risk_budget,
     trade_initial_risk,
     trade_notional,
 )
@@ -23,14 +27,21 @@ __all__ = [
     "InitialRiskAnalysis",
     "InitialRiskDiagnostic",
     "JournalMetrics",
+    "JournalSegment",
     "RiskBreach",
+    "RiskBudget",
+    "RiskBudgetBreach",
+    "RiskBudgetEvaluation",
     "RiskLimits",
     "Trade",
     "ValidationIssue",
     "aggregate_exposure",
+    "analyze_by_side",
+    "analyze_by_symbol",
     "analyze_initial_risk",
     "analyze_trades",
     "check_risk_limits",
+    "evaluate_risk_budget",
     "find_duplicate_trades",
     "journal_fingerprint",
     "trade_initial_risk",
@@ -38,4 +49,4 @@ __all__ = [
     "validate_trades",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
