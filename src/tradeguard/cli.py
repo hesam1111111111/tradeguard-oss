@@ -6,7 +6,7 @@ from dataclasses import asdict
 from math import isfinite
 from pathlib import Path
 
-from .analytics import analyze_by_period, analyze_by_side, analyze_by_symbol, analyze_trades
+from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .diagnostics import diagnose_journal
 from .io import load_trades_csv
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
@@ -35,7 +35,7 @@ def _segments_payload(trades, temporal_group: str | None = None) -> dict:
         "by_side": {segment.key: asdict(segment.metrics) for segment in analyze_by_side(trades)},
     }
     if temporal_group is not None:
-        temporal = analyze_by_period(trades, temporal_group)
+        temporal = analyze_by_closed_period(trades, temporal_group)
         payload["temporal"] = {
             "basis": "recorded_closed_at_calendar_period",
             "period": temporal.period,
