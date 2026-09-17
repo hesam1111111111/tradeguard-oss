@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Iterable
 
 from .models import Trade
+
+
+def _require_positive_finite(name: str, value: float) -> None:
+    if not isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be a positive finite number")
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,8 +39,8 @@ class RiskLimits:
             ("max_symbol_gross_notional", self.max_symbol_gross_notional),
             ("max_trade_notional", self.max_trade_notional),
         ):
-            if value is not None and value < 0:
-                raise ValueError(f"{name} must be non-negative")
+            if value is not None:
+                _require_positive_finite(name, value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,21 +54,26 @@ class RiskBreach:
 
 
 def trade_notional(trade: Trade) -> float:
-    """Return absolute entry notional for a trade."""
-    return abs(trade.entry * trade.quantity)
+    """Return validated entry-price notional for a trade."""
+    _require_positive_finite("trade.entry", trade.entry)
+    _require_positive_finite("trade.quantity", trade.quantity)
+    return trade.entry * trade.quantity
 
 
 def aggregate_exposure(trades: Iterable[Trade]) -> tuple[Exposure, ...]:
-    """Aggregate entry notional by normalized symbol and side.
+    """Aggregate validated entry notional by normalized symbol and side.
 
     This is deliberately price-at-entry exposure, not live mark-to-market exposure.
     """
     totals: dict[str, list[float]] = {}
     for trade in trades:
         symbol = trade.symbol.strip().upper()
-        long_short = totals.setdefault(symbol, [0.0, 0.0])
+        if not symbol:
+            raise ValueError("trade.symbol must not be empty")
+        side = trade.normalized_side
         notional = trade_notional(trade)
-        if trade.normalized_side == "long":
+        long_short = totals.setdefault(symbol, [0.0, 0.0])
+        if side == "long":
             long_short[0] += notional
         else:
             long_short[1] += notional
