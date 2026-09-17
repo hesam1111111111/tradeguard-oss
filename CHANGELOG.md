@@ -6,6 +6,29 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-17
+
+### Added
+- Deterministic generic CSV importing through explicit canonical-to-source column mappings.
+- Public importer API: `ImportDiagnostic`, `ImportResult`, and `import_mapped_csv`.
+- Source-indexed import diagnostics with source/imported/rejected row accounting.
+- Repeatable CLI `--map canonical=source_column` controls for mapped imports.
+- Additive `import` provenance in `tradeguard.report.v1`, including mapping, completeness, row counts, and diagnostics.
+- Privacy-safe synthetic mapped-import examples and regression coverage.
+
+### Changed
+- Incomplete mapped imports suppress metrics, risk, and segmented analytics rather than analyzing a partial dataset as complete.
+- Native TradeGuard CSV behavior remains backward compatible and reports `import: null`.
+- Report-contract regression coverage now treats import provenance as an additive v1 field.
+
+### Compatibility
+- `tradeguard.report.v1` remains the schema identifier; import provenance is additive.
+- Mapping is explicit only. TradeGuard does not guess aliases or silently infer ambiguous source fields.
+
+### Scope
+- Import adapters operate on local historical files only.
+- No broker/exchange connectivity, credentials, live synchronization, signals, or order execution are included.
+
 ## [0.6.0] - 2026-09-17
 
 ### Added

@@ -2,7 +2,7 @@
 
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.6.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.7.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
@@ -21,6 +21,7 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Stop-based historical risk budgets with explicit incomplete-data diagnostics
 - Deterministic segmented analytics by symbol and side
 - Optional deterministic closed-at grouping by calendar day or month
+- Explicit mapped CSV imports with source-row provenance and rejection diagnostics
 - Stable additive `tradeguard.report.v1` contract with explicit compatibility rules
 - Human-readable or versioned JSON CLI output
 - Deterministic JSON report export
@@ -62,23 +63,28 @@ ETHUSDT,short,3200,3100,3260,1.0,2026-01-02T09:00:00,2026-01-02T12:00:00
 
 ## CLI
 
-Human-readable report:
+Native TradeGuard CSV:
 
 ```bash
 tradeguard examples/sample_journal.csv
-```
-
-JSON to stdout:
-
-```bash
 tradeguard examples/sample_journal.csv --json
-```
-
-Write a deterministic, machine-readable report:
-
-```bash
 tradeguard examples/sample_journal.csv --output report.json
 ```
+
+Explicit mapped import from a differently named CSV:
+
+```bash
+tradeguard examples/mapped_journal.csv \
+  --map symbol=Ticker \
+  --map side=Direction \
+  --map entry=OpenPrice \
+  --map exit=ClosePrice \
+  --map stop_loss=Stop \
+  --map quantity=Size \
+  --json
+```
+
+Mappings are explicit by design. TradeGuard does not guess aliases or infer ambiguous columns. The report adds an `import` provenance section with source/imported/rejected row counts, the exact mapping, completeness, and source-indexed diagnostics. If mapped import is incomplete, metrics/risk/segments are suppressed rather than computed from a partial dataset.
 
 Add deterministic temporal analytics based on the recorded `closed_at` value:
 
@@ -87,7 +93,7 @@ tradeguard examples/sample_journal.csv --group-closed-by day --json
 tradeguard examples/sample_journal.csv --group-closed-by month --output report.json
 ```
 
-The report retains the `tradeguard.report.v1` envelope and includes source, metrics, validation issues, journal fingerprint, structured integrity diagnostics, risk analysis, and segmented analytics. Metrics are skipped when blocking validation or duplicate-record errors exist rather than silently calculating statistics from ambiguous data.
+The report retains the `tradeguard.report.v1` envelope and includes source, metrics, validation issues, journal fingerprint, structured integrity diagnostics, risk analysis, segmented analytics, and optional import provenance. Metrics are skipped when blocking validation, duplicate-record errors, or incomplete mapped import make analysis unsafe.
 
 The stable machine-readable contract and compatibility rules are documented in [`docs/report-contract-v1.md`](docs/report-contract-v1.md).
 
@@ -101,20 +107,24 @@ from tradeguard import (
     analyze_by_closed_period,
     analyze_trades,
     check_risk_limits,
+    import_mapped_csv,
     journal_fingerprint,
     validate_trades,
 )
 
-trades = [
-    Trade("BTCUSDT", "long", entry=60000, exit=61500, stop_loss=59000, quantity=0.1),
-]
-
+trades = [Trade("BTCUSDT", "long", entry=60000, exit=61500, stop_loss=59000, quantity=0.1)]
 print(validate_trades(trades))
 print(journal_fingerprint(trades))
 print(analyze_trades(trades))
 print(analyze_by_closed_period(trades, "month"))
 print(aggregate_exposure(trades))
 print(check_risk_limits(trades, RiskLimits(max_gross_notional=10000)))
+
+mapped = import_mapped_csv(
+    "examples/mapped_journal.csv",
+    {"symbol": "Ticker", "side": "Direction", "entry": "OpenPrice", "exit": "ClosePrice"},
+)
+print(mapped.imported_rows, mapped.rejected_rows)
 ```
 
 ### Exposure semantics
@@ -131,7 +141,7 @@ Behavioral changes should arrive through scoped branches and pull requests with 
 
 ## Roadmap
 
-Near-term work includes privacy-safe sample datasets, additional import adapters, stronger data-integrity diagnostics, and broader report-consumer fixtures. Live brokerage connectivity and order execution are outside the current core scope.
+Near-term work includes additional offline import adapters, stronger source-data integrity diagnostics, and broader report-consumer fixtures. Live brokerage connectivity and order execution are outside the current core scope.
 
 ## Contributing
 
