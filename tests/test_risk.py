@@ -21,9 +21,46 @@ def test_aggregate_exposure_normalizes_symbol_and_side():
     assert btc.net_notional == 80.0
 
 
-def test_trade_notional_is_absolute():
+def test_trade_notional_uses_entry_price_and_quantity():
     trade = Trade(symbol="BTCUSDT", side="long", entry=100.0, exit=110.0, quantity=2.0)
     assert trade_notional(trade) == 200.0
+
+
+@pytest.mark.parametrize("value", [0.0, -1.0, float("nan"), float("inf"), float("-inf")])
+def test_risk_limits_require_positive_finite_values(value):
+    with pytest.raises(ValueError, match="positive finite"):
+        RiskLimits(max_gross_notional=value)
+
+
+@pytest.mark.parametrize(
+    ("entry", "quantity", "field"),
+    [
+        (0.0, 1.0, "trade.entry"),
+        (-1.0, 1.0, "trade.entry"),
+        (float("nan"), 1.0, "trade.entry"),
+        (float("inf"), 1.0, "trade.entry"),
+        (100.0, 0.0, "trade.quantity"),
+        (100.0, -1.0, "trade.quantity"),
+        (100.0, float("nan"), "trade.quantity"),
+        (100.0, float("inf"), "trade.quantity"),
+    ],
+)
+def test_trade_notional_rejects_invalid_direct_api_inputs(entry, quantity, field):
+    trade = Trade(symbol="BTCUSDT", side="long", entry=entry, exit=110.0, quantity=quantity)
+    with pytest.raises(ValueError, match=field):
+        trade_notional(trade)
+
+
+def test_aggregate_exposure_rejects_blank_symbol():
+    trade = Trade(symbol="   ", side="long", entry=100.0, exit=110.0, quantity=1.0)
+    with pytest.raises(ValueError, match="symbol"):
+        aggregate_exposure([trade])
+
+
+def test_aggregate_exposure_rejects_invalid_side():
+    trade = Trade(symbol="BTCUSDT", side="buy", entry=100.0, exit=110.0, quantity=1.0)
+    with pytest.raises(ValueError, match="Side"):
+        aggregate_exposure([trade])
 
 
 def test_risk_limits_report_trade_symbol_and_portfolio_breaches():
@@ -53,8 +90,3 @@ def test_risk_limits_report_trade_symbol_and_portfolio_breaches():
 def test_equal_to_limit_is_not_a_breach():
     trades = [Trade(symbol="BTCUSDT", side="long", entry=100.0, exit=110.0, quantity=2.0)]
     assert check_risk_limits(trades, RiskLimits(max_gross_notional=200.0)) == ()
-
-
-def test_negative_limits_are_rejected():
-    with pytest.raises(ValueError, match="non-negative"):
-        RiskLimits(max_gross_notional=-1.0)
