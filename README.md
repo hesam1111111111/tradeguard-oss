@@ -4,6 +4,7 @@
 [![Latest release](https://img.shields.io/github/v/release/hesam1111111111/tradeguard-oss)](https://github.com/hesam1111111111/tradeguard-oss/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10–3.13](https://img.shields.io/badge/Python-3.10%E2%80%933.13-blue.svg)](.github/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/tradeguard-oss)](https://pypi.org/project/tradeguard-oss/)
 ## Install
 
 ```bash
