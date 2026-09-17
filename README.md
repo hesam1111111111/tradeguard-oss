@@ -1,22 +1,23 @@
 # TradeGuard OSS
 
-TradeGuard OSS is an open-source toolkit for validating trading journals, checking basic risk hygiene, and computing reproducible performance metrics from closed trades.
+TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.2.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.3.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
-Trading journals often contain missing stop losses, inconsistent direction labels, invalid timestamps, incomplete position sizing, or performance statistics that cannot be reproduced. TradeGuard provides a small, dependency-light Python core that turns those checks into testable rules and deterministic reports.
+Trading journals often contain missing stop losses, inconsistent direction labels, invalid timestamps, duplicate records, incomplete position sizing, or performance statistics that cannot be reproduced. TradeGuard turns those checks into dependency-light, testable rules and deterministic reports.
 
 ## Current capabilities
 
 - Versioned CSV journal schema and row-level diagnostics
-- Long/short PnL calculation
-- Initial risk and R-multiple calculation
-- Win rate, net PnL, expectancy, gross profit/loss and profit factor
-- Breakeven count and best/worst closed-trade PnL
-- Closed-trade maximum drawdown
+- Long/short PnL, initial risk, and R-multiple calculation
+- Win rate, net PnL, expectancy, gross profit/loss, profit factor, breakeven count, best/worst trade, and closed-trade maximum drawdown
 - Stop-loss and data-quality validation
+- Deterministic SHA-256 journal fingerprints
+- Exact duplicate-trade detection and blocking integrity diagnostics
+- Entry-notional portfolio exposure by normalized symbol and side
+- Gross/net notional exposure and configurable portfolio, symbol, and trade notional limits
 - Human-readable or versioned JSON CLI output
 - Deterministic JSON report export
 - Automated tests across Python 3.10–3.13
@@ -75,20 +76,35 @@ Write a deterministic, machine-readable report:
 tradeguard examples/sample_journal.csv --output report.json
 ```
 
-The report includes a stable top-level schema identifier (`tradeguard.report.v1`), source path, metrics, and validation issues. Metrics are skipped when validation contains errors rather than silently calculating statistics from invalid data.
+The report retains the `tradeguard.report.v1` envelope and includes source, metrics, validation issues, journal fingerprint, and structured integrity diagnostics. Metrics are skipped when blocking validation or duplicate-record errors exist rather than silently calculating statistics from ambiguous data.
 
 ## Python API
 
 ```python
-from tradeguard import Trade, analyze_trades, validate_trades
+from tradeguard import (
+    RiskLimits,
+    Trade,
+    aggregate_exposure,
+    analyze_trades,
+    check_risk_limits,
+    journal_fingerprint,
+    validate_trades,
+)
 
 trades = [
     Trade("BTCUSDT", "long", entry=60000, exit=61500, stop_loss=59000, quantity=0.1),
 ]
 
-print(analyze_trades(trades))
 print(validate_trades(trades))
+print(journal_fingerprint(trades))
+print(analyze_trades(trades))
+print(aggregate_exposure(trades))
+print(check_risk_limits(trades, RiskLimits(max_gross_notional=10000)))
 ```
+
+### Exposure semantics
+
+`aggregate_exposure` and notional risk limits use absolute `entry * quantity` values from the supplied journal. They describe historical entry-notional concentration; they are **not** live positions, mark-to-market exposure, margin usage, or broker account state.
 
 ## Development policy
 
@@ -96,7 +112,7 @@ Behavioral changes should arrive through scoped branches and pull requests with 
 
 ## Roadmap
 
-Near-term work includes broker/export adapters, richer portfolio-risk diagnostics, report compatibility guarantees, privacy-safe sample datasets, packaging/release automation, and additional tests. See open issues for scoped work.
+Near-term work includes report compatibility guarantees, privacy-safe sample datasets, packaging/release automation, additional import adapters, and deeper risk diagnostics. Live brokerage connectivity and order execution are outside the current core scope.
 
 ## Contributing
 
