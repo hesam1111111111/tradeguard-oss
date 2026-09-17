@@ -11,13 +11,17 @@ class JournalMetrics:
     trades: int
     wins: int
     losses: int
+    breakeven: int
     win_rate: float
     net_pnl: float
     gross_profit: float
     gross_loss: float
+    profit_factor: float | None
     expectancy: float
     max_drawdown: float
     average_r_multiple: float | None
+    best_trade: float | None
+    worst_trade: float | None
 
 
 def _max_drawdown(pnls: list[float]) -> float:
@@ -36,6 +40,7 @@ def analyze_trades(trades: Iterable[Trade]) -> JournalMetrics:
     pnls = [t.pnl for t in items]
     wins = sum(1 for pnl in pnls if pnl > 0)
     losses = sum(1 for pnl in pnls if pnl < 0)
+    breakeven = sum(1 for pnl in pnls if pnl == 0)
     total = len(items)
     gross_profit = sum(pnl for pnl in pnls if pnl > 0)
     gross_loss = abs(sum(pnl for pnl in pnls if pnl < 0))
@@ -45,11 +50,15 @@ def analyze_trades(trades: Iterable[Trade]) -> JournalMetrics:
         trades=total,
         wins=wins,
         losses=losses,
+        breakeven=breakeven,
         win_rate=(wins / total) if total else 0.0,
         net_pnl=sum(pnls),
         gross_profit=gross_profit,
         gross_loss=gross_loss,
+        profit_factor=(gross_profit / gross_loss) if gross_loss else None,
         expectancy=(sum(pnls) / total) if total else 0.0,
         max_drawdown=_max_drawdown(pnls),
         average_r_multiple=(sum(r_values) / len(r_values)) if r_values else None,
+        best_trade=max(pnls) if pnls else None,
+        worst_trade=min(pnls) if pnls else None,
     )
