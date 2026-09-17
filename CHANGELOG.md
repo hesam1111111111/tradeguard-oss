@@ -6,6 +6,27 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-17
+
+### Added
+- Deterministic SHA-256 journal fingerprinting using canonical trade records.
+- Exact duplicate-trade detection with first and duplicate source indices.
+- Structured machine-readable journal diagnostics and integrity status.
+- Entry-notional portfolio exposure aggregation by normalized symbol and side.
+- Gross and net notional exposure calculations.
+- Configurable portfolio, per-symbol, and per-trade notional risk limits with structured breaches.
+- Regression tests for journal integrity, diagnostics, exposure aggregation, and risk-limit boundaries.
+
+### Changed
+- JSON reports include additive integrity diagnostics while retaining the `tradeguard.report.v1` compatibility envelope.
+- Metrics are suppressed when blocking validation or duplicate-trade integrity errors exist.
+- Human-readable reports handle undefined profit factor without formatting failures.
+- Public package exports include the v0.3.0 portfolio-risk API.
+
+### Scope
+- Portfolio exposure in v0.3.0 is historical entry-price notional over the supplied journal, not live mark-to-market exposure.
+- TradeGuard remains an analytics, validation, and risk-analysis toolkit; it does not connect to brokers or execute orders.
+
 ## [0.2.0] - 2026-09-17
 
 ### Added
