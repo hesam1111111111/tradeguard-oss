@@ -38,7 +38,7 @@ The project follows semantic versioning while the public API is still evolving.
 
 ### Changed
 - CLI validates journals before computing metrics and suppresses misleading metrics when validation errors exist.
-- Directional calculations reject unsupported trade sides instead of treatinging them as short positions.
+- Directional calculations reject unsupported trade sides instead of treating them as short positions.
 - CI verifies supported Python versions 3.10 through 3.13.
 
 ## [0.1.0] - 2026-09-17
