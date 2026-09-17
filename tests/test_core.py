@@ -1,3 +1,5 @@
+import pytest
+
 from tradeguard import Trade, analyze_trades, validate_trades
 
 
@@ -14,6 +16,21 @@ def test_long_trade_metrics_and_r_multiple():
     assert metrics.net_pnl == 20
     assert metrics.max_drawdown == 0
     assert metrics.average_r_multiple == 2
+
+
+def test_short_trade_pnl_is_directionally_correct():
+    trade = Trade(symbol="ETHUSDT", side="short", entry=100, exit=90, stop_loss=105, quantity=3)
+    assert trade.pnl == 30
+    assert trade.initial_risk == 15
+    assert trade.r_multiple == 2
+
+
+def test_invalid_side_is_not_silently_treated_as_short():
+    trade = Trade(symbol="BTCUSDT", side="flat", entry=100, exit=90, stop_loss=105)
+    issues = validate_trades([trade])
+    assert any(i.code == "invalid_side" for i in issues)
+    with pytest.raises(ValueError, match="Side must be"):
+        _ = trade.pnl
 
 
 def test_drawdown_is_peak_to_trough_on_closed_trade_pnl():
