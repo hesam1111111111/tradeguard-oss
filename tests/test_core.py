@@ -16,6 +16,8 @@ def test_long_trade_metrics_and_r_multiple():
     assert metrics.net_pnl == 20
     assert metrics.max_drawdown == 0
     assert metrics.average_r_multiple == 2
+    assert metrics.best_trade == 20
+    assert metrics.worst_trade == 20
 
 
 def test_short_trade_pnl_is_directionally_correct():
@@ -33,7 +35,7 @@ def test_invalid_side_is_not_silently_treated_as_short():
         _ = trade.pnl
 
 
-def test_drawdown_is_peak_to_trough_on_closed_trade_pnl():
+def test_drawdown_and_profit_factor():
     trades = [
         Trade("A", "long", 100, 110, 95),
         Trade("B", "long", 100, 92, 95),
@@ -41,6 +43,19 @@ def test_drawdown_is_peak_to_trough_on_closed_trade_pnl():
     ]
     metrics = analyze_trades(trades)
     assert metrics.max_drawdown == 12
+    assert metrics.gross_profit == 10
+    assert metrics.gross_loss == 12
+    assert metrics.profit_factor == pytest.approx(10 / 12)
+    assert metrics.best_trade == 10
+    assert metrics.worst_trade == -8
+
+
+def test_breakeven_trade_is_counted_separately():
+    metrics = analyze_trades([Trade("A", "long", 100, 100, 95)])
+    assert metrics.breakeven == 1
+    assert metrics.wins == 0
+    assert metrics.losses == 0
+    assert metrics.profit_factor is None
 
 
 def test_missing_stop_loss_is_warning():
