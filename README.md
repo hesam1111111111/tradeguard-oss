@@ -12,7 +12,7 @@ pip install tradeguard-oss
 ```
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.7.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.7.1`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
