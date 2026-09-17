@@ -25,3 +25,21 @@ jobs:
           pip install -e .[dev]
       - name: Test
         run: pytest -q
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Smoke install wheel
+        run: |
+          python -m venv /tmp/tradeguard-wheel-smoke
+          /tmp/tradeguard-wheel-smoke/bin/pip install dist/*.whl
+          /tmp/tradeguard-wheel-smoke/bin/python -c "import tradeguard; assert tradeguard.__version__ == '0.5.0'"
+          /tmp/tradeguard-wheel-smoke/bin/tradeguard --help
