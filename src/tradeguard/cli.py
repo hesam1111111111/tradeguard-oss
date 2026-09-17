@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .diagnostics import diagnose_journal
+from .importers import import_mapped_csv
 from .io import load_trades_csv
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
 
@@ -47,15 +48,30 @@ def _segments_payload(trades, temporal_period: str | None = None) -> dict:
     return payload
 
 
-def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_period: str | None = None) -> dict:
-    trades = load_trades_csv(csv_path)
+def _import_payload(result) -> dict:
+    return {
+        "mode": "explicit_mapped_csv",
+        "complete": result.complete,
+        "source_rows": result.source_rows,
+        "imported_rows": result.imported_rows,
+        "rejected_rows": result.rejected_rows,
+        "mapping": {canonical: source for canonical, source in result.mapping},
+        "diagnostics": [asdict(item) for item in result.diagnostics],
+    }
+
+
+def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_period: str | None = None, import_mapping: dict[str, str] | None = None) -> dict:
+    import_result = import_mapped_csv(csv_path, import_mapping) if import_mapping is not None else None
+    trades = list(import_result.trades) if import_result is not None else load_trades_csv(csv_path)
     diagnostics = diagnose_journal(trades)
-    valid = diagnostics.valid_for_metrics
+    import_complete = import_result is None or import_result.complete
+    valid = diagnostics.valid_for_metrics and import_complete
     metrics = analyze_trades(trades) if valid else None
     diagnostics_payload = diagnostics.to_dict()
     return {
         "report_schema": REPORT_SCHEMA,
         "source": str(csv_path),
+        "import": _import_payload(import_result) if import_result is not None else None,
         "journal_fingerprint": diagnostics.fingerprint,
         "metrics": asdict(metrics) if metrics is not None else None,
         "issues": diagnostics_payload["validation_issues"],
@@ -75,11 +91,23 @@ def _positive_finite(value: str) -> float:
     return number
 
 
+def _mapping_entry(value: str) -> tuple[str, str]:
+    if "=" not in value:
+        raise argparse.ArgumentTypeError("must use canonical=source_column")
+    canonical, source = value.split("=", 1)
+    canonical = canonical.strip()
+    source = source.strip()
+    if not canonical or not source:
+        raise argparse.ArgumentTypeError("must use non-blank canonical=source_column")
+    return canonical, source
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate and analyze a trading journal CSV.")
     parser.add_argument("csv_path", help="Path to the trading journal CSV file")
     parser.add_argument("--json", action="store_true", help="Emit JSON output")
     parser.add_argument("--output", help="Write the deterministic JSON report to a file")
+    parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
     parser.add_argument("--max-symbol-gross-notional", type=_positive_finite)
@@ -88,11 +116,22 @@ def main() -> None:
     parser.add_argument("--max-total-initial-risk", type=_positive_finite)
     args = parser.parse_args()
 
+    import_mapping = None
+    if args.mappings:
+        import_mapping = {}
+        for canonical, source in args.mappings:
+            if canonical in import_mapping:
+                parser.error(f"duplicate canonical mapping: {canonical}")
+            import_mapping[canonical] = source
+
     limit_values = (args.max_gross_notional, args.max_symbol_gross_notional, args.max_trade_notional)
     limits = RiskLimits(args.max_gross_notional, args.max_symbol_gross_notional, args.max_trade_notional) if any(v is not None for v in limit_values) else None
     budget_values = (args.max_trade_initial_risk, args.max_total_initial_risk)
     budget = RiskBudget(args.max_trade_initial_risk, args.max_total_initial_risk) if any(v is not None for v in budget_values) else None
-    payload = build_payload(args.csv_path, limits=limits, budget=budget, temporal_period=args.group_closed_by)
+    try:
+        payload = build_payload(args.csv_path, limits=limits, budget=budget, temporal_period=args.group_closed_by, import_mapping=import_mapping)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     if args.output:
         Path(args.output).write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
@@ -105,8 +144,11 @@ def main() -> None:
     diagnostics = payload["diagnostics"]
     print("TradeGuard OSS report")
     print(f"Journal fingerprint: {payload['journal_fingerprint']}")
+    if payload["import"] is not None:
+        imported = payload["import"]
+        print(f"Import rows: {imported['imported_rows']}/{imported['source_rows']} imported, {imported['rejected_rows']} rejected")
     if metrics is None:
-        print("Metrics: skipped because journal integrity or validation errors were found.")
+        print("Metrics: skipped because journal integrity, validation, or import-integrity errors were found.")
     else:
         print(f"Trades: {metrics['trades']}")
         print(f"Win rate: {metrics['win_rate']:.2%}")
