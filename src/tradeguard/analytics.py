@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from datetime import datetime
+from typing import Iterable, Literal
 
 from .models import Trade
 
@@ -28,6 +29,27 @@ class JournalMetrics:
 class JournalSegment:
     key: str
     metrics: JournalMetrics
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalDiagnostic:
+    code: str
+    message: str
+    trade_index: int
+    symbol: str
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalAnalysis:
+    basis: str
+    period: str
+    measured_trades: int
+    segments: tuple[JournalSegment, ...]
+    diagnostics: tuple[TemporalDiagnostic, ...]
+
+    @property
+    def complete(self) -> bool:
+        return not self.diagnostics
 
 
 def _max_drawdown(pnls: list[float]) -> float:
@@ -71,7 +93,6 @@ def analyze_trades(trades: Iterable[Trade]) -> JournalMetrics:
 
 
 def analyze_by_symbol(trades: Iterable[Trade]) -> tuple[JournalSegment, ...]:
-    """Return metrics grouped by normalized symbol in deterministic key order."""
     groups: dict[str, list[Trade]] = {}
     for trade in trades:
         symbol = trade.symbol.strip().upper()
@@ -82,9 +103,56 @@ def analyze_by_symbol(trades: Iterable[Trade]) -> tuple[JournalSegment, ...]:
 
 
 def analyze_by_side(trades: Iterable[Trade]) -> tuple[JournalSegment, ...]:
-    """Return metrics grouped by normalized long/short side in deterministic key order."""
     groups: dict[str, list[Trade]] = {}
     for trade in trades:
         side = trade.normalized_side
         groups.setdefault(side, []).append(trade)
     return tuple(JournalSegment(key, analyze_trades(groups[key])) for key in sorted(groups))
+
+
+def _period_key(timestamp: datetime, period: Literal["day", "month"]) -> str:
+    if period == "day":
+        return timestamp.date().isoformat()
+    if period == "month":
+        return f"{timestamp.year:04d}-{timestamp.month:02d}"
+    raise ValueError("period must be 'day' or 'month'")
+
+
+def analyze_by_closed_period(
+    trades: Iterable[Trade], period: Literal["day", "month"] = "day"
+) -> TemporalAnalysis:
+    """Group historical trades by their recorded close timestamp.
+
+    Timestamp values are used exactly as supplied. TradeGuard does not infer or
+    convert a timezone; callers must normalize timestamps before analysis when
+    cross-timezone calendar grouping is required.
+    """
+    if period not in {"day", "month"}:
+        raise ValueError("period must be 'day' or 'month'")
+
+    groups: dict[str, list[Trade]] = {}
+    diagnostics: list[TemporalDiagnostic] = []
+    measured = 0
+    for index, trade in enumerate(trades):
+        symbol = trade.symbol.strip().upper() or "<UNKNOWN>"
+        timestamp = trade.closed_at
+        if timestamp is None:
+            diagnostics.append(TemporalDiagnostic(
+                code="missing_closed_at",
+                message="trade.closed_at is required for temporal analytics",
+                trade_index=index,
+                symbol=symbol,
+            ))
+            continue
+        key = _period_key(timestamp, period)
+        groups.setdefault(key, []).append(trade)
+        measured += 1
+
+    segments = tuple(JournalSegment(key, analyze_trades(groups[key])) for key in sorted(groups))
+    return TemporalAnalysis(
+        basis="recorded_closed_at_no_timezone_conversion",
+        period=period,
+        measured_trades=measured,
+        segments=segments,
+        diagnostics=tuple(diagnostics),
+    )
