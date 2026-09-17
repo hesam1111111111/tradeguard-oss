@@ -16,8 +16,15 @@ class Trade:
     closed_at: datetime | None = None
 
     @property
+    def normalized_side(self) -> str:
+        side = self.side.strip().lower()
+        if side not in {"long", "short"}:
+            raise ValueError("Side must be 'long' or 'short'.")
+        return side
+
+    @property
     def pnl(self) -> float:
-        direction = 1.0 if self.side.lower() == "long" else -1.0
+        direction = 1.0 if self.normalized_side == "long" else -1.0
         return (self.exit - self.entry) * direction * self.quantity
 
     @property

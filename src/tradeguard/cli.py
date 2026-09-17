@@ -16,11 +16,12 @@ def main() -> None:
     args = parser.parse_args()
 
     trades = load_trades_csv(args.csv_path)
-    metrics = analyze_trades(trades)
     issues = validate_trades(trades)
+    has_errors = any(issue.severity == "error" for issue in issues)
+    metrics = None if has_errors else analyze_trades(trades)
 
     payload = {
-        "metrics": asdict(metrics),
+        "metrics": asdict(metrics) if metrics is not None else None,
         "issues": [asdict(issue) for issue in issues],
     }
 
@@ -29,11 +30,14 @@ def main() -> None:
         return
 
     print("TradeGuard OSS report")
-    print(f"Trades: {metrics.trades}")
-    print(f"Win rate: {metrics.win_rate:.2%}")
-    print(f"Net PnL: {metrics.net_pnl:.2f}")
-    print(f"Expectancy: {metrics.expectancy:.2f}")
-    print(f"Max drawdown: {metrics.max_drawdown:.2f}")
+    if metrics is None:
+        print("Metrics: skipped because validation errors were found.")
+    else:
+        print(f"Trades: {metrics.trades}")
+        print(f"Win rate: {metrics.win_rate:.2%}")
+        print(f"Net PnL: {metrics.net_pnl:.2f}")
+        print(f"Expectancy: {metrics.expectancy:.2f}")
+        print(f"Max drawdown: {metrics.max_drawdown:.2f}")
     print(f"Validation issues: {len(issues)}")
     for issue in issues:
         print(f"- [{issue.severity}] row {issue.index}: {issue.code} - {issue.message}")
