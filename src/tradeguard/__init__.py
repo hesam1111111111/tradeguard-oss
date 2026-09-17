@@ -10,6 +10,7 @@ from .analytics import (
     analyze_by_symbol,
     analyze_trades,
 )
+from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
 from .risk import (
@@ -33,6 +34,8 @@ from .validation import ValidationIssue, validate_trades
 __all__ = [
     "DuplicateTrade",
     "Exposure",
+    "ImportDiagnostic",
+    "ImportResult",
     "InitialRiskAnalysis",
     "InitialRiskDiagnostic",
     "JournalMetrics",
@@ -55,10 +58,11 @@ __all__ = [
     "check_risk_limits",
     "evaluate_risk_budget",
     "find_duplicate_trades",
+    "import_mapped_csv",
     "journal_fingerprint",
     "trade_initial_risk",
     "trade_notional",
     "validate_trades",
 ]
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
