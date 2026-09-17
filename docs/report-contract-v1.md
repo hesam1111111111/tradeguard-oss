@@ -10,12 +10,27 @@ Within v1, existing fields keep their established meaning. New capabilities may 
 
 - `report_schema`: always `tradeguard.report.v1`.
 - `source`: input path as supplied to the CLI/API.
+- `import`: `null` for native TradeGuard CSV input, otherwise explicit mapped-import provenance.
 - `journal_fingerprint`: deterministic journal integrity fingerprint.
-- `metrics`: aggregate metrics, or `null` when journal validation/integrity blocks safe metrics.
+- `metrics`: aggregate metrics, or `null` when journal validation, integrity, or import completeness blocks safe metrics.
 - `issues`: validation issues retained for legacy consumers.
 - `diagnostics`: structured journal diagnostics.
 - `risk`: historical risk analysis, or `null` whenever metrics are suppressed.
 - `segments`: segmented analytics, or `null` whenever metrics are suppressed.
+
+## Import provenance
+
+When the explicit mapped CSV importer is used, the additive `import` object contains:
+
+- `mode`: `explicit_mapped_csv`.
+- `complete`: true only when every source data row was imported without importer diagnostics.
+- `source_rows`: count of source data rows processed, excluding the header.
+- `imported_rows`: count converted to canonical TradeGuard `Trade` records.
+- `rejected_rows`: count rejected during mapping/value conversion.
+- `mapping`: exact canonical-field to source-column mapping supplied by the caller.
+- `diagnostics`: deterministic source-row-indexed importer diagnostics.
+
+TradeGuard does not infer source aliases or guess ambiguous mappings. If `complete` is false, aggregate metrics, risk, and segments are suppressed rather than silently presenting analytics from a partial import. For mapped CSV imports, `source_rows = imported_rows + rejected_rows`.
 
 ## Segments
 

@@ -9,7 +9,7 @@ def _write_journal(tmp_path: Path, header: str, rows: str) -> Path:
     return path
 
 
-def test_v1_legacy_shape_remains_stable_without_temporal_request(tmp_path: Path):
+def test_v1_native_report_keeps_existing_members_with_additive_import_field(tmp_path: Path):
     journal = _write_journal(
         tmp_path,
         "symbol,side,entry,exit,stop_loss,quantity",
@@ -19,7 +19,7 @@ def test_v1_legacy_shape_remains_stable_without_temporal_request(tmp_path: Path)
 
     assert REPORT_SCHEMA == "tradeguard.report.v1"
     assert payload["report_schema"] == REPORT_SCHEMA
-    assert set(payload) == {
+    established = {
         "report_schema",
         "source",
         "journal_fingerprint",
@@ -29,6 +29,9 @@ def test_v1_legacy_shape_remains_stable_without_temporal_request(tmp_path: Path)
         "risk",
         "segments",
     }
+    assert established <= set(payload)
+    assert set(payload) - established == {"import"}
+    assert payload["import"] is None
     assert set(payload["segments"]) == {"by_symbol", "by_side"}
     assert "by_closed_period" not in payload["segments"]
 
@@ -61,6 +64,7 @@ def test_invalid_journal_preserves_nullable_contract(tmp_path: Path):
     assert payload["metrics"] is None
     assert payload["risk"] is None
     assert payload["segments"] is None
+    assert payload["import"] is None
     assert payload["diagnostics"]["valid_for_metrics"] is False
 
 

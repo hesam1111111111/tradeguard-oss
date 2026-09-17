@@ -16,6 +16,7 @@ def _journal(tmp_path: Path, rows: str) -> Path:
 def test_build_payload_has_versioned_report_schema(tmp_path: Path):
     payload = build_payload(str(_journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")))
     assert payload["report_schema"] == "tradeguard.report.v1"
+    assert payload["import"] is None
     assert payload["metrics"]["trades"] == 1
     assert payload["metrics"]["net_pnl"] == 10.0
     assert len(payload["journal_fingerprint"]) == 64
@@ -36,6 +37,43 @@ def test_report_contract_adds_limits_budget_and_segments_without_changing_v1(tmp
     assert payload["risk"]["budget"]["complete"] is True
     assert [item["code"] for item in payload["risk"]["budget"]["breaches"]] == ["max_trade_initial_risk", "max_total_initial_risk"]
     assert payload["risk"]["limits"]["max_trade_notional"] == 150.0
+
+
+def test_mapped_import_adds_provenance_and_preserves_analytics(tmp_path: Path):
+    source = tmp_path / "external.csv"
+    source.write_text("ticker,direction,open_px,close_px,qty\nBTCUSDT,long,100,110,2\n", encoding="utf-8")
+    payload = build_payload(
+        str(source),
+        import_mapping={"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px", "quantity": "qty"},
+    )
+    assert payload["report_schema"] == "tradeguard.report.v1"
+    assert payload["import"] == {
+        "mode": "explicit_mapped_csv",
+        "complete": True,
+        "source_rows": 1,
+        "imported_rows": 1,
+        "rejected_rows": 0,
+        "mapping": {"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px", "quantity": "qty"},
+        "diagnostics": [],
+    }
+    assert payload["metrics"]["net_pnl"] == 20.0
+
+
+def test_mapped_import_rejections_are_explicit_and_suppress_partial_metrics(tmp_path: Path):
+    source = tmp_path / "external.csv"
+    source.write_text("ticker,direction,open_px,close_px\nBTCUSDT,long,100,110\nETHUSDT,short,bad,90\n", encoding="utf-8")
+    payload = build_payload(
+        str(source),
+        import_mapping={"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px"},
+    )
+    assert payload["import"]["source_rows"] == 2
+    assert payload["import"]["imported_rows"] == 1
+    assert payload["import"]["rejected_rows"] == 1
+    assert payload["import"]["complete"] is False
+    assert payload["import"]["diagnostics"][0]["source_row"] == 3
+    assert payload["metrics"] is None
+    assert payload["risk"] is None
+    assert payload["segments"] is None
 
 
 def test_temporal_grouping_is_additive_and_machine_readable(tmp_path: Path):
@@ -95,6 +133,21 @@ def test_cli_writes_deterministic_json_report_with_budget(tmp_path: Path, monkey
     assert data["risk"]["breaches"][0]["code"] == "max_gross_notional"
     assert data["risk"]["budget"]["breaches"][0]["code"] == "max_total_initial_risk"
     assert list(data["segments"]["by_symbol"]) == ["BTCUSDT", "ETHUSDT"]
+
+
+def test_cli_mapped_import_writes_provenance(tmp_path: Path, monkeypatch):
+    source = tmp_path / "external.csv"
+    source.write_text("ticker,direction,open_px,close_px\nBTCUSDT,long,100,110\n", encoding="utf-8")
+    report = tmp_path / "report.json"
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(source), "--output", str(report),
+        "--map", "symbol=ticker", "--map", "side=direction", "--map", "entry=open_px", "--map", "exit=close_px",
+    ])
+    main()
+    data = json.loads(report.read_text(encoding="utf-8"))
+    assert data["import"]["complete"] is True
+    assert data["import"]["mapping"]["symbol"] == "ticker"
+    assert data["metrics"]["net_pnl"] == 10.0
 
 
 def test_cli_group_closed_by_writes_temporal_section(tmp_path: Path, monkeypatch):
