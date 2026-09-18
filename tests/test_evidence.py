@@ -95,3 +95,18 @@ def test_source_fingerprint_tampering_invalidates_evidence(tmp_path):
     tampered = deepcopy(evidence)
     tampered["source_fingerprint"] = "0" * 64
     assert not verify_trial_evidence(tampered)
+
+
+def test_legacy_report_v1_without_source_fingerprint_remains_compatible(tmp_path):
+    report = _report(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    report.pop("source_fingerprint")
+    evidence = build_trial_evidence("legacy-run", report)
+    assert evidence["source_fingerprint"] is None
+    assert verify_trial_evidence(evidence)
+
+
+def test_present_source_fingerprint_still_fails_closed_when_invalid(tmp_path):
+    report = _report(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    report["source_fingerprint"] = "not-a-digest"
+    with pytest.raises(ValueError, match="source_fingerprint"):
+        build_trial_evidence("run-1", report)
