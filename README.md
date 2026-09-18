@@ -119,7 +119,7 @@ tradeguard baseline.csv --reconcile-with migrated.csv --json
 tradeguard baseline.csv --reconcile-with migrated.csv --output reconciliation.json --fail-on-drift
 ```
 
-Reconciliation is deterministic and offline. Row order does not matter, duplicate multiplicity is preserved, and uniquely identifiable changed trades report field-level differences. The `--fail-on-drift` switch exits with status 1 when differences are found, making the command usable as a CI or migration integrity gate. Reconciliation uses a separate `tradeguard.reconciliation.v1` machine-readable envelope and does not modify the existing analytics report contract.
+Reconciliation is deterministic and offline. Row order does not matter, duplicate multiplicity is preserved, and uniquely identifiable changed trades report field-level differences. The `--fail-on-drift` switch exits with status 1 when differences are found, making the command usable as a CI or migration integrity gate. Saved reconciliation JSON also carries a deterministic envelope fingerprint and can be independently checked with `tradeguard --verify-reconciliation reconciliation.json`; verification fails closed if the envelope or recorded source provenance is altered. Reconciliation uses a separate `tradeguard.reconciliation.v1` machine-readable envelope and does not modify the existing analytics report contract.
 
 Add deterministic temporal analytics based on the recorded `closed_at` value:
 

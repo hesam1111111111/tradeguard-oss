@@ -23,6 +23,7 @@ from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
 from .reconciliation import FieldMismatch, ReconciliationResult, RecordDelta, reconcile_journals, reconciliation_fingerprint
+from .reconciliation_evidence import sign_reconciliation_evidence, verify_reconciliation_evidence
 from .risk import (
     Exposure,
     InitialRiskAnalysis,
@@ -85,10 +86,12 @@ __all__ = [
     "journal_fingerprint",
     "reconcile_journals",
     "reconciliation_fingerprint",
+    "sign_reconciliation_evidence",
     "trade_initial_risk",
     "trade_notional",
     "validate_trades",
     "verify_evidence_bundle",
+    "verify_reconciliation_evidence",
     "verify_trial_evidence",
 ]
 
