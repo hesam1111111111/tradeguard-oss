@@ -178,3 +178,39 @@ def test_cli_rejects_non_positive_or_non_finite_limits(tmp_path: Path, monkeypat
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_cli_reconciliation_writes_stable_audit_json(tmp_path: Path, monkeypatch):
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit,stop_loss,quantity\n"
+    reference.write_text(header + "BTCUSDT,long,100,110,95,1\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,108,95,1\n", encoding="utf-8")
+    report = tmp_path / "reconciliation.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["tradeguard", str(reference), "--reconcile-with", str(candidate), "--output", str(report), "--json"],
+    )
+    main()
+    data = json.loads(report.read_text(encoding="utf-8"))
+    assert data["reconciliation_schema"] == "tradeguard.reconciliation.v1"
+    assert data["clean"] is False
+    assert data["modified_rows"] == 1
+    assert data["mismatches"][0]["field"] == "exit"
+    assert len(data["reference_fingerprint"]) == 64
+    assert len(data["candidate_fingerprint"]) == 64
+
+
+def test_cli_reconciliation_fail_on_drift_is_ci_friendly(tmp_path: Path, monkeypatch):
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit\n"
+    reference.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,109\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["tradeguard", str(reference), "--reconcile-with", str(candidate), "--fail-on-drift"],
+    )
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
