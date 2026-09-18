@@ -10,6 +10,7 @@ Within v1, existing fields keep their established meaning. New capabilities may 
 
 - `report_schema`: always `tradeguard.report.v1`.
 - `source`: input path as supplied to the CLI/API.
+- `source_fingerprint`: SHA-256 of the exact input file bytes; this identifies the source artifact rather than normalized trade semantics.
 - `import`: `null` for native TradeGuard CSV input, otherwise explicit mapped-import provenance.
 - `journal_fingerprint`: deterministic journal integrity fingerprint.
 - `metrics`: aggregate metrics, or `null` when journal validation, integrity, or import completeness blocks safe metrics.
@@ -53,6 +54,10 @@ TradeGuard does not infer or convert timezones for calendar grouping. Callers th
 Entry notional exposure and stop-based initial risk are separate concepts. Exposure is historical entry-price notional; initial risk is stop distance times quantity at entry. Neither is live mark-to-market exposure.
 
 Missing or unusable stop data remains explicit diagnostics and is never silently interpreted as zero risk.
+
+## Source artifact vs journal identity
+
+`source_fingerprint` hashes exact file bytes. Byte-level changes such as BOMs or line endings intentionally change it. `journal_fingerprint` identifies canonical journal semantics after parsing/normalization. Two byte-different source files may therefore share a journal fingerprint while retaining distinct source identities. Trial Ledger evidence binds both identities.
 
 ## Determinism
 
