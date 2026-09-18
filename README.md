@@ -100,6 +100,15 @@ tradeguard examples/mapped_journal.csv \
   --json
 ```
 
+Explicit reusable profile from the CLI:
+
+```bash
+tradeguard export.csv --import-profile generic_ticket_export --json
+tradeguard export.csv --import-profile generic_ticket_export --import-preview --json
+```
+
+A named profile must be selected explicitly. `--import-profile` and `--map` are mutually exclusive, and unknown profile names fail closed. Profile-based reports preserve both the selected profile name and resolved mapping in import provenance; Trial Ledger evidence also records the selected profile.
+
 Mappings are explicit by design. TradeGuard does not guess aliases or infer ambiguous columns. The report adds an `import` provenance section with source/imported/rejected row counts, the exact mapping, completeness, and source-indexed diagnostics. If mapped import is incomplete, metrics/risk/segments are suppressed rather than computed from a partial dataset.
 
 Reconcile a canonical journal against another export or migration result:
