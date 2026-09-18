@@ -6,6 +6,39 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-18
+
+### Added
+- Deterministic offline journal reconciliation through the public `reconcile_journals` API.
+- Order-independent SHA-256 reconciliation fingerprints for audit and migration verification.
+- Duplicate-aware missing and unexpected record deltas that preserve multiplicity.
+- Field-level mismatch evidence for uniquely pairable changed trades.
+- Versioned `tradeguard.reconciliation.v1` machine-readable audit output.
+- CLI reconciliation with `--reconcile-with`.
+- CI/migration integrity gating with `--fail-on-drift`, which exits with status 1 when drift is detected.
+- Regression coverage for reordered journals, duplicate multiplicity, field drift, ambiguous identities, CLI JSON output, and CI-friendly failure semantics.
+
+### Changed
+- README now documents reconciliation as an integrity primitive for export, migration, backup, and downstream journal verification.
+- Existing `tradeguard.report.v1` analytics behavior remains unchanged.
+
+### Compatibility
+- `tradeguard.reconciliation.v1` is a separate additive contract and does not alter `tradeguard.report.v1`.
+- Reconciliation is deterministic and intentionally avoids fuzzy or heuristic matching.
+
+### Scope
+- Reconciliation operates on local canonical TradeGuard CSV journals only.
+- No broker credentials, live synchronization, market-data enrichment, strategy inference, or order execution are included.
+
+## [0.7.1] - 2026-09-17
+
+### Changed
+- Added PyPI project metadata links for Homepage, Repository, Issues, and Changelog.
+- Added PyPI install guidance and version badge to the README.
+- Synchronized package and runtime version metadata for the patch release.
+- Added Trusted Publisher-based PyPI release automation.
+
+
 ## [0.7.0] - 2026-09-17
 
 ### Added
