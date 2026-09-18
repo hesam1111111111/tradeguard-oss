@@ -12,7 +12,7 @@ pip install tradeguard-oss
 ```
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.11.1`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.12.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
@@ -36,8 +36,9 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Optional deterministic closed-at grouping by calendar day or month
 - Explicit mapped CSV imports with deterministic field-level diagnostics and read-only dry-run preview
 - Source-structure integrity checks for duplicate CSV headers and unexpected extra row values
+- Explicit reusable CSV import profiles with fail-closed profile selection
 - Fail-closed certification CLI gate: only valid `PASS` bundles exit successfully
-- Stable additive `tradeguard.report.v1` contract with explicit compatibility rules
+- Stable additive `tradeguard.report.v1` contract with explicit compatibility rules and executable consumer-contract tests
 - Human-readable or versioned JSON CLI output
 - Deterministic JSON report export
 - Automated tests across Python 3.10–3.13 plus distribution wheel smoke-install validation
@@ -172,7 +173,7 @@ Behavioral changes should arrive through scoped branches and pull requests with 
 
 ## Roadmap
 
-Near-term work includes additional offline import adapters, stronger source-data integrity diagnostics, and broader report-consumer fixtures. Live brokerage connectivity and order execution are outside the current core scope.
+Near-term work includes community-validated offline adapter profiles, deeper source-data integrity edge cases, and downstream consumer feedback backed by reproducible synthetic fixtures. Live brokerage connectivity and order execution are outside the current core scope.
 
 ## Contributing
 
