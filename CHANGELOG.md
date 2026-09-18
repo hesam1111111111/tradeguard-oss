@@ -6,9 +6,27 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-18
+
+### Added
+- Exact SHA-256 source-artifact identities for both reference and candidate inputs in `tradeguard.reconciliation.v1`.
+- Deterministic `reconciliation_evidence_fingerprint` sealing for saved reconciliation envelopes.
+- Public reconciliation evidence signing and verification APIs.
+- Fail-closed `--verify-reconciliation` CLI verification that requires no CSV inputs.
+- Regression coverage proving semantically equivalent but byte-different journals can reconcile cleanly while retaining distinct source-artifact provenance.
+
 ### Fixed
 - Trial Ledger evidence creation accepts otherwise-valid legacy `tradeguard.report.v1` producers that predate the additive `source_fingerprint` member; unavailable source-artifact provenance is represented as `null`, never fabricated.
 - Present `source_fingerprint` values remain strictly validated and bound into deterministic evidence.
+
+### Compatibility
+- Existing reconciliation semantics remain unchanged; source-artifact identities and envelope integrity fingerprints are additive members of `tradeguard.reconciliation.v1`.
+- Existing report, Trial Ledger, and Evidence Bundle schema identifiers remain unchanged.
+- Legacy report.v1 producers remain accepted at the Trial Ledger API boundary when source-artifact provenance is unavailable.
+
+### Scope
+- Verification certifies internal deterministic reconciliation-envelope integrity only; it does not attest broker/exchange provenance, real execution, profitability, strategy quality, identity, or future safety.
+- No broker connectivity, credentials, market-data enrichment, signals, strategy logic, or order execution are introduced.
 
 ## [0.13.0] - 2026-09-18
 
