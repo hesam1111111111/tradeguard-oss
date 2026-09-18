@@ -6,6 +6,9 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Changed
+- Added a zero-clone PyPI quickstart and a direct privacy-safe feedback path to community validation issue #34.
+
 ### Added
 - Public `validate_evidence_bundle()` API for established Evidence Bundle v1 semantic validation.
 
