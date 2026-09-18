@@ -25,6 +25,13 @@ The following should be populated only from directly observable sources:
 - package download counts: not independently verified in this snapshot
 - documented real-world users/use cases: none verified in this snapshot
 
+## Public outreach evidence
+
+- On 2026-09-19, TradeGuard OSS was introduced in the official monthly r/Python Showcase Thread to request real feedback from Python developers working with CSV pipelines, trading journals, data validation, reproducible reporting, CLI workflows, and GitHub Actions integration.
+- Direct Reddit comment: https://www.reddit.com/r/Python/comments/1w78kp5/comment/pano1nt/
+
+This is outreach evidence only. It does **not** by itself establish adoption, usage, stars, forks, external contributors, or real-world deployment.
+
 ## Community-validation track
 
 Issue [#34](https://github.com/hesam1111111111/tradeguard-oss/issues/34) remains the dedicated path for genuine privacy-safe user feedback, importer edge cases, report-consumer issues, documentation friction, and concrete offline adapter requests.
