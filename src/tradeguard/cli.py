@@ -101,6 +101,8 @@ def _reconciliation_payload(reference_path: str, candidate_path: str) -> dict:
         "reconciliation_schema": RECONCILIATION_SCHEMA,
         "reference": str(reference_path),
         "candidate": str(candidate_path),
+        "reference_source_fingerprint": source_file_fingerprint(reference_path),
+        "candidate_source_fingerprint": source_file_fingerprint(candidate_path),
         "clean": result.clean,
         "reference_fingerprint": result.reference_fingerprint,
         "candidate_fingerprint": result.candidate_fingerprint,
