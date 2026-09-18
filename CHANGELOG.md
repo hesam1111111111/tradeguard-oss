@@ -7,6 +7,9 @@ The project follows semantic versioning while the public API is still evolving.
 ## [Unreleased]
 
 ### Added
+- Dated external-evidence snapshot that separates verified public distribution/indexing signals from unknown adoption metrics.
+
+### Added
 - Factual Codex for Open Source application packet with reviewer evidence path, draft form answers, and explicit adoption-evidence boundaries.
 
 ### Added
