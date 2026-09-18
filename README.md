@@ -63,6 +63,8 @@ A successful first run demonstrates that the installed package can parse a journ
 
 If you try TradeGuard with a privacy-safe or synthetic export layout and find importer friction, a reproducible edge case, a report-consumer problem, or documentation confusion, please add it to [community validation issue #34](https://github.com/hesam1111111111/tradeguard-oss/issues/34). Do not post credentials, account identifiers, private broker exports, or personal financial records.
 
+For a complete reproducible walkthrough of analysis → reconciliation → drift gate → Trial Ledger → certification → verification, see [`docs/end-to-end-integrity-demo.md`](docs/end-to-end-integrity-demo.md).
+
 ## Install for development
 
 ```bash
