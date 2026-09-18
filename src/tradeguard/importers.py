@@ -10,8 +10,8 @@ from .models import Trade
 
 _CANONICAL_FIELDS = ("symbol","side","entry","exit","stop_loss","quantity","opened_at","closed_at")
 _REQUIRED_FIELDS = ("symbol","side","entry","exit")
-_NUMERIC_FIELDS = {"entry","exit","stop_loss","quantity"}
-_DATETIME_FIELDS = {"opened_at","closed_at"}
+_NUMERIC_FIELDS = ("entry", "exit", "stop_loss", "quantity")
+_DATETIME_FIELDS = ("opened_at", "closed_at")
 
 @dataclass(frozen=True, slots=True)
 class ImportDiagnostic:
@@ -52,7 +52,7 @@ def _diagnose_row(row: dict[str,str], mapping: Mapping[str,str], source_row: int
     for field in _NUMERIC_FIELDS:
         if field not in mapping: continue
         value=row.get(mapping[field])
-        if value in (None,""):
+        if value is None or not value.strip():
             continue
         try: float(value)
         except (TypeError,ValueError):
@@ -60,7 +60,7 @@ def _diagnose_row(row: dict[str,str], mapping: Mapping[str,str], source_row: int
     for field in _DATETIME_FIELDS:
         if field not in mapping: continue
         value=row.get(mapping[field])
-        if value in (None,""): continue
+        if value is None or not value.strip(): continue
         try: datetime.fromisoformat(value)
         except (TypeError,ValueError):
             out.append(ImportDiagnostic("invalid_datetime",f"Mapped value for {field} is not a valid ISO datetime",source_row,field,value))
