@@ -15,6 +15,7 @@ from .importers import import_mapped_csv
 from .io import load_trades_csv, source_file_fingerprint
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
 from .reconciliation import reconcile_journals
+from .reconciliation_evidence import sign_reconciliation_evidence, verify_reconciliation_evidence
 
 REPORT_SCHEMA = "tradeguard.report.v1"
 RECONCILIATION_SCHEMA = "tradeguard.reconciliation.v1"
@@ -97,7 +98,7 @@ def _reconciliation_payload(reference_path: str, candidate_path: str) -> dict:
     reference = load_trades_csv(reference_path)
     candidate = load_trades_csv(candidate_path)
     result = reconcile_journals(reference, candidate)
-    return {
+    payload = {
         "reconciliation_schema": RECONCILIATION_SCHEMA,
         "reference": str(reference_path),
         "candidate": str(candidate_path),
@@ -122,6 +123,7 @@ def _reconciliation_payload(reference_path: str, candidate_path: str) -> dict:
             for item in result.mismatches
         ],
     }
+    return sign_reconciliation_evidence(payload)
 
 
 def _positive_finite(value: str) -> float:
@@ -155,6 +157,7 @@ def main() -> None:
     parser.add_argument("--parent-evidence-fingerprint", help="Optional parent evidence SHA-256 for evidence-chain linkage")
     parser.add_argument("--certification-output", metavar="JSON", help="Write a deterministic evidence certification bundle")
     parser.add_argument("--verify-certification", metavar="JSON", help="Verify an existing evidence certification bundle and exit")
+    parser.add_argument("--verify-reconciliation", metavar="JSON", help="Verify a saved reconciliation evidence envelope and exit")
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
@@ -197,6 +200,18 @@ def main() -> None:
                 print(f"- {canonical}={source}")
         return
 
+    if args.verify_reconciliation:
+        try:
+            reconciliation = json.loads(Path(args.verify_reconciliation).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            parser.error(str(exc))
+        valid = isinstance(reconciliation, dict) and verify_reconciliation_evidence(reconciliation)
+        if args.json:
+            print(json.dumps({"valid": valid}, sort_keys=True))
+        else:
+            print(f"TradeGuard reconciliation evidence valid: {valid}")
+        raise SystemExit(0 if valid else 1)
+
     if args.verify_certification:
         try:
             bundle = json.loads(Path(args.verify_certification).read_text(encoding="utf-8"))
@@ -212,7 +227,7 @@ def main() -> None:
         raise SystemExit(0 if passed else 1)
 
     if args.csv_path is None:
-        parser.error("csv_path is required unless --verify-certification is used")
+        parser.error("csv_path is required unless a verification mode is used")
 
     if args.certification_output and not args.evidence_output:
         parser.error("--certification-output requires --evidence-output")
