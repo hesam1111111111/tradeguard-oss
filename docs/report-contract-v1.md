@@ -56,3 +56,10 @@ Missing or unusable stop data remains explicit diagnostics and is never silently
 ## Determinism
 
 Report JSON is serialized with sorted keys by the CLI. Segment producers also use deterministic key ordering. Source-index diagnostics retain input order.
+
+
+## Consumer compatibility fixtures
+
+TradeGuard treats report compatibility as an executable contract, not only a documentation promise. `tests/test_report_consumer_contract.py` builds a representative synthetic v1 report and verifies established top-level members and types, byte-stable deterministic JSON serialization, and the v1 rule that consumers ignore unknown additive members.
+
+The fixture is generated from synthetic journal data and normalizes the source path before byte comparison so machine-specific temporary paths cannot affect the result. When an established field is removed, renamed, retyped, or reinterpreted, these tests should fail; such a change requires a new report schema identifier rather than updating the v1 expectation silently.
