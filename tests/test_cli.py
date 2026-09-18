@@ -301,3 +301,41 @@ def test_cli_import_preview_reports_rejections_without_running_analytics(tmp_pat
     assert data["rejected_rows"] == 1
     assert data["diagnostics"][0]["code"] == "invalid_number"
     assert "metrics" not in data
+
+
+def test_cli_verification_passes_without_csv_path(tmp_path: Path, monkeypatch):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    evidence = tmp_path / "evidence.json"
+    certification = tmp_path / "certification.json"
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(journal), "--evidence-output", str(evidence), "--certification-output", str(certification), "--run-id", "run-pass"])
+    main()
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-certification", str(certification)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+
+
+def test_cli_verification_fails_for_valid_fail_certification(tmp_path: Path, monkeypatch):
+    from tradeguard.certification import build_evidence_bundle
+    from tradeguard.evidence import build_trial_evidence
+
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    report = build_payload(str(journal))
+    evidence = build_trial_evidence("run-fail", report, parent_evidence_fingerprint="a" * 64)
+    bundle = build_evidence_bundle(evidence, expected_parent_fingerprint="b" * 64)
+    assert bundle["certification"]["status"] == "FAIL"
+    certification = tmp_path / "fail-certification.json"
+    certification.write_text(json.dumps(bundle), encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-certification", str(certification)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+
+
+def test_cli_verification_fails_closed_for_non_object_json(tmp_path: Path, monkeypatch):
+    certification = tmp_path / "not-object.json"
+    certification.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-certification", str(certification)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
