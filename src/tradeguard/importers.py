@@ -70,10 +70,17 @@ def import_mapped_csv(path: str | Path, mapping: Mapping[str,str]) -> ImportResu
     normalized=_validate_mapping(mapping); trades=[]; diagnostics=[]; source_rows=0; rejected=0
     with Path(path).open("r",encoding="utf-8-sig",newline="") as handle:
         reader=csv.DictReader(handle); fieldnames=reader.fieldnames or []
+        duplicate_headers=sorted({name for name in fieldnames if fieldnames.count(name)>1})
+        if duplicate_headers: raise ValueError(f"Duplicate source CSV columns: {', '.join(duplicate_headers)}")
         missing=[s for _,s in normalized if s not in fieldnames]
         if missing: raise ValueError(f"Missing mapped source columns: {', '.join(sorted(missing))}")
         for source_row,row in enumerate(reader,start=2):
             source_rows+=1
+            extra_values=row.get(None)
+            if extra_values:
+                rejected+=1
+                diagnostics.append(ImportDiagnostic("unexpected_extra_values","Source row contains more values than declared CSV columns",source_row,value=",".join(extra_values)))
+                continue
             row_diags=_diagnose_row(row,mapping,source_row)
             if row_diags:
                 rejected+=1; diagnostics.extend(row_diags); continue

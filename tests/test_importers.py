@@ -144,3 +144,33 @@ def test_import_diagnostics_use_canonical_order_and_ignore_blank_numeric_duplica
         ("invalid_datetime", "closed_at"),
     ]
     assert sum(d.field == "entry" for d in result.diagnostics) == 1
+
+
+def test_import_mapped_csv_rejects_duplicate_source_headers(tmp_path: Path):
+    source = _write(
+        tmp_path / "duplicate_headers.csv",
+        "ticker,direction,open_px,open_px,close_px\nBTCUSDT,long,100,101,110\n",
+    )
+    with pytest.raises(ValueError, match="Duplicate source CSV columns: open_px"):
+        import_mapped_csv(
+            source,
+            {"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px"},
+        )
+
+
+def test_import_mapped_csv_rejects_rows_with_unexpected_extra_values(tmp_path: Path):
+    source = _write(
+        tmp_path / "extra_values.csv",
+        "ticker,direction,open_px,close_px\nBTCUSDT,long,100,110,unexpected\nETHUSDT,short,50,45\n",
+    )
+    result = import_mapped_csv(
+        source,
+        {"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px"},
+    )
+    assert result.source_rows == 2
+    assert result.imported_rows == 1
+    assert result.rejected_rows == 1
+    assert result.complete is False
+    assert [(d.code, d.source_row, d.value) for d in result.diagnostics] == [
+        ("unexpected_extra_values", 2, "unexpected"),
+    ]
