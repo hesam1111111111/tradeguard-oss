@@ -339,3 +339,64 @@ def test_cli_verification_fails_closed_for_non_object_json(tmp_path: Path, monke
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 1
+
+
+def _ticket_profile_csv(tmp_path: Path) -> Path:
+    source = tmp_path / "ticket-profile.csv"
+    source.write_text(
+        "Ticker,Direction,OpenPrice,ClosePrice,Stop,Size,OpenTime,CloseTime\n"
+        "BTCUSDT,long,100,110,95,2,2026-09-01T09:00:00,2026-09-01T10:00:00\n",
+        encoding="utf-8",
+    )
+    return source
+
+
+def test_cli_import_profile_writes_explicit_provenance(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    report = tmp_path / "profile-report.json"
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--import-profile", "generic_ticket_export", "--output", str(report)])
+    main()
+    data = json.loads(report.read_text(encoding="utf-8"))
+    assert data["import"]["mode"] == "explicit_profile_csv"
+    assert data["import"]["profile"] == "generic_ticket_export"
+    assert data["import"]["mapping"]["entry"] == "OpenPrice"
+    assert data["metrics"]["net_pnl"] == 20.0
+
+
+def test_cli_import_profile_preview_is_read_only(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    output = tmp_path / "profile-preview.json"
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--import-profile", "generic_ticket_export", "--import-preview", "--output", str(output)])
+    main()
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["preview"] is True
+    assert data["profile"] == "generic_ticket_export"
+    assert data["imported_rows"] == 1
+    assert "metrics" not in data
+
+
+def test_cli_rejects_profile_and_map_combination(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--import-profile", "generic_ticket_export", "--map", "symbol=Ticker"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+
+
+def test_cli_unknown_import_profile_fails_closed(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--import-profile", "guessed-broker"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+
+
+def test_cli_trial_evidence_records_selected_import_profile(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    evidence = tmp_path / "profile-evidence.json"
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--import-profile", "generic_ticket_export", "--evidence-output", str(evidence), "--run-id", "profile-run"])
+    main()
+    data = json.loads(evidence.read_text(encoding="utf-8"))
+    assert data["configuration"]["import_profile"] == "generic_ticket_export"
+    assert data["configuration"]["import_mapping"] is None
+    assert data["import"]["mode"] == "explicit_profile_csv"
