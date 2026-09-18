@@ -1,0 +1,27 @@
+name: TradeGuard journal integrity
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  tradeguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install TradeGuard OSS
+        run: pip install tradeguard-oss
+
+      - name: Validate journal
+        run: tradeguard examples/integrity_reference.csv --json
+
+      - name: Fail if journal drift is detected
+        run: |
+          tradeguard examples/integrity_reference.csv \
+            --reconcile-with examples/integrity_candidate.csv \
+            --fail-on-drift
