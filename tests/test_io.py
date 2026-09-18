@@ -34,3 +34,25 @@ def test_csv_reports_physical_row_for_invalid_number(tmp_path: Path):
     )
     with pytest.raises(ValueError, match="CSV row 2"):
         load_trades_csv(csv_file)
+
+
+def test_load_trades_csv_normalizes_header_whitespace(tmp_path: Path):
+    csv_file = tmp_path / "spaced_headers.csv"
+    csv_file.write_text(
+        " symbol , side , entry , exit \nBTCUSDT,long,100,110\n",
+        encoding="utf-8",
+    )
+    trades = load_trades_csv(csv_file)
+    assert len(trades) == 1
+    assert trades[0].symbol == "BTCUSDT"
+    assert trades[0].entry == 100
+
+
+def test_load_trades_csv_rejects_header_collision_after_normalization(tmp_path: Path):
+    csv_file = tmp_path / "duplicate_headers.csv"
+    csv_file.write_text(
+        "symbol,side,entry, entry ,exit\nBTCUSDT,long,100,101,110\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="unique after trimming whitespace"):
+        load_trades_csv(csv_file)
