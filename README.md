@@ -210,7 +210,7 @@ Near-term work includes community-validated offline adapter profiles, deeper sou
 
 Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md), follow the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), open an issue for material changes, and include tests for behavioral changes.
 
-Repository-maintainer review criteria and evidence are tracked in [`docs/oss-application-readiness.md`](docs/oss-application-readiness.md).
+Repository-maintainer review criteria are tracked in [`docs/oss-application-readiness.md`](docs/oss-application-readiness.md), with an independently inspectable maintenance trail in [`docs/maintainer-evidence.md`](docs/maintainer-evidence.md).
 
 ## Security and privacy
 
