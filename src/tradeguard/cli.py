@@ -147,7 +147,8 @@ def main() -> None:
     parser.add_argument("--verify-certification", metavar="JSON", help="Verify an existing evidence certification bundle and exit")
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
-    parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")\n    parser.add_argument("--import-preview", action="store_true", help="Preview an explicit mapped CSV import without running journal analytics")
+    parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
+    parser.add_argument("--import-preview", action="store_true", help="Preview an explicit mapped CSV import without running journal analytics")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
     parser.add_argument("--max-symbol-gross-notional", type=_positive_finite)
@@ -220,7 +221,7 @@ def main() -> None:
         preview = _import_payload(preview_result)
         preview["preview"] = True
         if args.output:
-            Path(args.output).write_text(json.dumps(preview, indent=2, sort_keys=True, default=str) + "\\n", encoding="utf-8")
+            Path(args.output).write_text(json.dumps(preview, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
         if args.json:
             print(json.dumps(preview, indent=2, sort_keys=True, default=str))
         else:
