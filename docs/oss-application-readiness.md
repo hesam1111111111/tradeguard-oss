@@ -15,6 +15,8 @@ This document tracks public-repository readiness for maintainer-support programs
 
 ## Maintainer-workflow evidence
 
+A concise externally reviewable trail is maintained in [`docs/maintainer-evidence.md`](maintainer-evidence.md).
+
 The repository uses scoped issues, reviewable branches, pull requests, CI gates, release preparation, changelog updates, and explicit compatibility contracts. These are intended to make maintenance activity visible and reproducible.
 
 ## Remaining external signals
