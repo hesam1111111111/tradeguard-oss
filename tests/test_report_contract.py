@@ -30,7 +30,8 @@ def test_v1_native_report_keeps_existing_members_with_additive_import_field(tmp_
         "segments",
     }
     assert established <= set(payload)
-    assert set(payload) - established == {"import"}
+    assert set(payload) - established == {"import", "source_fingerprint"}
+    assert len(payload["source_fingerprint"]) == 64
     assert payload["import"] is None
     assert set(payload["segments"]) == {"by_symbol", "by_side"}
     assert "by_closed_period" not in payload["segments"]
