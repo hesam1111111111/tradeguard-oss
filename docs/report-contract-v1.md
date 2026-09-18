@@ -22,13 +22,14 @@ Within v1, existing fields keep their established meaning. New capabilities may 
 
 When the explicit mapped CSV importer is used, the additive `import` object contains:
 
-- `mode`: `explicit_mapped_csv`.
+- `mode`: `explicit_mapped_csv` for caller-supplied mappings, or `explicit_profile_csv` for an explicitly selected named profile.
 - `complete`: true only when every source data row was imported without importer diagnostics.
 - `source_rows`: count of source data rows processed, excluding the header.
 - `imported_rows`: count converted to canonical TradeGuard `Trade` records.
 - `rejected_rows`: count rejected during mapping/value conversion.
 - `mapping`: exact canonical-field to source-column mapping supplied by the caller.
 - `diagnostics`: deterministic source-row-indexed importer diagnostics.
+- `profile`: additive profile name present only for `explicit_profile_csv`; the resolved `mapping` remains authoritative and explicit.
 
 TradeGuard does not infer source aliases or guess ambiguous mappings. If `complete` is false, aggregate metrics, risk, and segments are suppressed rather than silently presenting analytics from a partial import. For mapped CSV imports, `source_rows = imported_rows + rejected_rows`.
 
