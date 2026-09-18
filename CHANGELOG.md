@@ -6,6 +6,9 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Added
+- Executable end-to-end integrity demo covering deterministic analysis, reconciliation drift, CI-style failure, Trial Ledger evidence, certification, and independent verification using synthetic fixtures.
+
 ### Changed
 - Added a zero-clone PyPI quickstart and a direct privacy-safe feedback path to community validation issue #34.
 
