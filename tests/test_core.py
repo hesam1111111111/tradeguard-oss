@@ -66,3 +66,9 @@ def test_missing_stop_loss_is_warning():
 def test_invalid_short_stop_loss_is_error():
     issues = validate_trades([Trade("ETHUSDT", "short", 100, 90, 95)])
     assert any(i.code == "invalid_stop_loss" and i.severity == "error" for i in issues)
+
+
+def test_validation_uses_canonical_side_whitespace_normalization():
+    trade = Trade(symbol="BTCUSDT", side=" long ", entry=100, exit=110, stop_loss=95)
+    assert not any(issue.code == "invalid_side" for issue in validate_trades([trade]))
+    assert trade.normalized_side == "long"
