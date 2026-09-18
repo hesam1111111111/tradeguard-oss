@@ -6,6 +6,9 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Added
+- Copy-paste GitHub Actions starter for PyPI-based journal validation and fail-closed reconciliation drift gating in downstream repositories.
+
 ## [0.16.0] - 2026-09-18
 
 ### Added
