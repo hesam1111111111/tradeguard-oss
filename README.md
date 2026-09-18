@@ -25,7 +25,7 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Win rate, net PnL, expectancy, gross profit/loss, profit factor, breakeven count, best/worst trade, and closed-trade maximum drawdown
 - Stop-loss and data-quality validation
 - Deterministic SHA-256 journal fingerprints
-- Versioned `tradeguard.trial-ledger.v1` evidence bundles with explicit run IDs, deterministic evidence fingerprints, parent-chain linkage, and tamper verification
+- Versioned `tradeguard.trial-ledger.v1` evidence bundles with explicit run IDs, deterministic evidence fingerprints, parent-chain linkage, tamper verification, and semantic contract validation
 - Versioned `tradeguard.evidence-bundle.v1` offline certification with deterministic PASS/FAIL integrity checks, bundle fingerprints, and CI-friendly verification
 - Deterministic journal reconciliation with exact source-artifact fingerprints, order-independent semantic audit fingerprints, duplicate-aware deltas, field-level drift evidence, and tamper-verifiable reconciliation envelopes
 - Exact duplicate-trade detection and blocking integrity diagnostics

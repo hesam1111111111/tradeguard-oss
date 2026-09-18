@@ -7,6 +7,13 @@ The project follows semantic versioning while the public API is still evolving.
 ## [Unreleased]
 
 ### Added
+- Trial Ledger verification now validates v1 structure and internal provenance/accounting invariants before accepting a matching fingerprint.
+- Public `validate_trial_evidence()` API for deterministic Trial Ledger contract validation.
+
+### Changed
+- Trial Ledger creation and verification now fail closed for malformed or internally contradictory evidence while preserving valid legacy `source_fingerprint: null` evidence.
+
+### Added
 - Reconciliation evidence verification now validates required v1 structure, SHA-256 digest syntax, non-negative accounting fields, delta/mismatch shapes, and core internal invariants before accepting a fingerprint.
 - Public `validate_reconciliation_evidence()` API for deterministic contract checks.
 

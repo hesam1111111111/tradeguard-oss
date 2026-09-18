@@ -25,6 +25,95 @@ def _validate_fingerprint(value: str, name: str) -> None:
         raise ValueError(f"{name} must be a 64-character SHA-256 hex digest") from exc
 
 
+def _is_sha256(value: Any) -> bool:
+    if not isinstance(value, str) or len(value) != 64:
+        return False
+    try:
+        int(value, 16)
+    except ValueError:
+        return False
+    return True
+
+
+def _is_non_negative_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def validate_trial_evidence(evidence: dict[str, Any]) -> bool:
+    """Validate Trial Ledger v1 structure and internal provenance/accounting invariants."""
+    if not isinstance(evidence, dict):
+        return False
+    if evidence.get("trial_ledger_schema") != TRIAL_LEDGER_SCHEMA:
+        return False
+
+    run_id = evidence.get("run_id")
+    if not isinstance(run_id, str) or not run_id.strip():
+        return False
+
+    parent = evidence.get("parent_evidence_fingerprint")
+    if parent is not None and not _is_sha256(parent):
+        return False
+
+    source_fingerprint = evidence.get("source_fingerprint")
+    if source_fingerprint is not None and not _is_sha256(source_fingerprint):
+        return False
+
+    if not _is_sha256(evidence.get("journal_fingerprint")):
+        return False
+
+    record_count = evidence.get("record_count")
+    if not _is_non_negative_int(record_count):
+        return False
+
+    if not isinstance(evidence.get("configuration"), dict):
+        return False
+
+    metrics = evidence.get("metrics")
+    if not isinstance(metrics, dict):
+        return False
+    if metrics.get("trades") != record_count:
+        return False
+
+    diagnostics = evidence.get("diagnostics")
+    if not isinstance(diagnostics, dict):
+        return False
+
+    risk = evidence.get("risk")
+    if risk is not None and not isinstance(risk, dict):
+        return False
+
+    segments = evidence.get("segments")
+    if segments is not None and not isinstance(segments, dict):
+        return False
+
+    imported = evidence.get("import")
+    if imported is not None:
+        if not isinstance(imported, dict):
+            return False
+        if not isinstance(imported.get("mode"), str) or not imported["mode"].strip():
+            return False
+        if imported.get("source_fingerprint") != source_fingerprint:
+            return False
+        if not isinstance(imported.get("complete"), bool):
+            return False
+
+        source_rows = imported.get("source_rows")
+        imported_rows = imported.get("imported_rows")
+        rejected_rows = imported.get("rejected_rows")
+        if not all(_is_non_negative_int(value) for value in (source_rows, imported_rows, rejected_rows)):
+            return False
+        if source_rows != imported_rows + rejected_rows:
+            return False
+        if imported["complete"] != (rejected_rows == 0):
+            return False
+        if not isinstance(imported.get("mapping"), dict):
+            return False
+        if not isinstance(imported.get("diagnostics"), list):
+            return False
+
+    return True
+
+
 def build_trial_evidence(
     run_id: str,
     report: dict[str, Any],
@@ -86,6 +175,8 @@ def build_trial_evidence(
         "risk": deepcopy(report.get("risk")),
         "segments": deepcopy(report.get("segments")),
     }
+    if not validate_trial_evidence(record):
+        raise ValueError("trial evidence violates tradeguard.trial-ledger.v1 contract")
     record["evidence_fingerprint"] = _sha256(record)
     return record
 
@@ -95,16 +186,21 @@ def verify_trial_evidence(
     *,
     expected_parent_fingerprint: str | None = None,
 ) -> bool:
-    """Return True only when the evidence fingerprint and optional chain link match."""
-    if evidence.get("trial_ledger_schema") != TRIAL_LEDGER_SCHEMA:
+    """Return True only when the Trial Ledger contract, fingerprint, and optional chain link match."""
+    if not isinstance(evidence, dict):
         return False
     stored = evidence.get("evidence_fingerprint")
-    if not isinstance(stored, str):
+    if not _is_sha256(stored):
         return False
-    if expected_parent_fingerprint is not None and evidence.get("parent_evidence_fingerprint") != expected_parent_fingerprint:
-        return False
+    if expected_parent_fingerprint is not None:
+        if not _is_sha256(expected_parent_fingerprint):
+            return False
+        if evidence.get("parent_evidence_fingerprint") != expected_parent_fingerprint:
+            return False
     unsigned = deepcopy(evidence)
     unsigned.pop("evidence_fingerprint", None)
+    if not validate_trial_evidence(unsigned):
+        return False
     try:
         return _sha256(unsigned) == stored
     except (TypeError, ValueError):

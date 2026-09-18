@@ -110,3 +110,63 @@ def test_present_source_fingerprint_still_fails_closed_when_invalid(tmp_path):
     report["source_fingerprint"] = "not-a-digest"
     with pytest.raises(ValueError, match="source_fingerprint"):
         build_trial_evidence("run-1", report)
+
+
+def test_trial_evidence_validator_rejects_invalid_run_id_and_count(tmp_path):
+    from tradeguard.evidence import validate_trial_evidence
+
+    evidence = build_trial_evidence("run-1", _report(tmp_path, "BTCUSDT,long,100,110,95,1\n"))
+
+    broken_run = deepcopy(evidence)
+    broken_run["run_id"] = "   "
+    assert not validate_trial_evidence({k: v for k, v in broken_run.items() if k != "evidence_fingerprint"})
+
+    broken_count = deepcopy(evidence)
+    broken_count["record_count"] = -1
+    assert not verify_trial_evidence(broken_count)
+
+
+def test_trial_evidence_validator_rejects_invalid_parent_and_source_digests(tmp_path):
+    evidence = build_trial_evidence("run-1", _report(tmp_path, "BTCUSDT,long,100,110,95,1\n"))
+
+    broken_parent = deepcopy(evidence)
+    broken_parent["parent_evidence_fingerprint"] = "x" * 64
+    assert not verify_trial_evidence(broken_parent)
+
+    broken_source = deepcopy(evidence)
+    broken_source["source_fingerprint"] = "z" * 64
+    assert not verify_trial_evidence(broken_source)
+
+
+def test_trial_evidence_validator_rejects_import_accounting_contradictions(tmp_path):
+    source = tmp_path / "mapped.csv"
+    source.write_text("ticker,direction,open_px,close_px\nBTCUSDT,long,100,110\n", encoding="utf-8")
+    report = build_payload(
+        str(source),
+        import_mapping={"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px"},
+    )
+    evidence = build_trial_evidence("run-1", report)
+
+    broken_rows = deepcopy(evidence)
+    broken_rows["import"]["source_rows"] = 2
+    assert not verify_trial_evidence(broken_rows)
+
+    broken_complete = deepcopy(evidence)
+    broken_complete["import"]["complete"] = False
+    assert not verify_trial_evidence(broken_complete)
+
+    broken_source = deepcopy(evidence)
+    broken_source["import"]["source_fingerprint"] = "0" * 64
+    assert not verify_trial_evidence(broken_source)
+
+
+def test_trial_evidence_validator_preserves_legacy_null_source_provenance(tmp_path):
+    from tradeguard.evidence import validate_trial_evidence
+
+    report = _report(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    report.pop("source_fingerprint")
+    evidence = build_trial_evidence("legacy-run", report)
+    unsigned = deepcopy(evidence)
+    unsigned.pop("evidence_fingerprint")
+    assert validate_trial_evidence(unsigned)
+    assert verify_trial_evidence(evidence)

@@ -18,7 +18,7 @@ from .certification import (
     build_evidence_bundle,
     verify_evidence_bundle,
 )
-from .evidence import TRIAL_LEDGER_SCHEMA, build_trial_evidence, verify_trial_evidence
+from .evidence import TRIAL_LEDGER_SCHEMA, build_trial_evidence, validate_trial_evidence, verify_trial_evidence
 from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
@@ -90,6 +90,7 @@ __all__ = [
     "trade_initial_risk",
     "trade_notional",
     "validate_reconciliation_evidence",
+    "validate_trial_evidence",
     "validate_trades",
     "verify_evidence_bundle",
     "verify_reconciliation_evidence",
