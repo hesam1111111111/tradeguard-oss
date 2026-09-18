@@ -237,3 +237,46 @@ def test_cli_trial_evidence_requires_explicit_run_id(tmp_path: Path, monkeypatch
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_cli_writes_and_verifies_certification_bundle(tmp_path: Path, monkeypatch):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    evidence = tmp_path / "evidence.json"
+    certification = tmp_path / "certification.json"
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(journal), "--evidence-output", str(evidence),
+        "--certification-output", str(certification), "--run-id", "oos-0042",
+    ])
+    main()
+    data = json.loads(certification.read_text(encoding="utf-8"))
+    assert data["evidence_bundle_schema"] == "tradeguard.evidence-bundle.v1"
+    assert data["certification"]["status"] == "PASS"
+    assert len(data["bundle_fingerprint"]) == 64
+
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(journal), "--verify-certification", str(certification),
+    ])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+
+
+def test_cli_verification_fails_for_tampered_bundle(tmp_path: Path, monkeypatch):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    evidence = tmp_path / "evidence.json"
+    certification = tmp_path / "certification.json"
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(journal), "--evidence-output", str(evidence),
+        "--certification-output", str(certification), "--run-id", "run-1",
+    ])
+    main()
+    data = json.loads(certification.read_text(encoding="utf-8"))
+    data["evidence"]["metrics"]["net_pnl"] = 999999
+    certification.write_text(json.dumps(data), encoding="utf-8")
+
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(journal), "--verify-certification", str(certification),
+    ])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
