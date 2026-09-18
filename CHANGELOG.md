@@ -6,6 +6,13 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Added
+- Reconciliation evidence verification now validates required v1 structure, SHA-256 digest syntax, non-negative accounting fields, delta/mismatch shapes, and core internal invariants before accepting a fingerprint.
+- Public `validate_reconciliation_evidence()` API for deterministic contract checks.
+
+### Changed
+- Reconciliation signing now fails closed for malformed or logically contradictory envelopes instead of fingerprinting them.
+
 ## [0.14.0] - 2026-09-18
 
 ### Added
