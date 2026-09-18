@@ -7,6 +7,12 @@ The project follows semantic versioning while the public API is still evolving.
 ## [Unreleased]
 
 ### Added
+- Public `validate_evidence_bundle()` API for established Evidence Bundle v1 semantic validation.
+
+### Fixed
+- Evidence Bundle v1 verification now accepts fingerprint-covered unknown additive top-level members while still failing closed for malformed established fields, inconsistent certification semantics, and tampering.
+
+### Added
 - Formal `tradeguard.reconciliation.v1` compatibility contract documentation.
 - Executable consumer-contract fixtures for reconciliation, Trial Ledger, and Evidence Bundle v1 established members, deterministic serialization, additive-member tolerance, and legacy Trial Ledger source-provenance compatibility.
 
