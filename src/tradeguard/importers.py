@@ -52,7 +52,7 @@ def _diagnose_row(row: dict[str,str], mapping: Mapping[str,str], source_row: int
     for field in _NUMERIC_FIELDS:
         if field not in mapping: continue
         value=row.get(mapping[field])
-        if value in (None,""):
+        if value is None or not value.strip():
             continue
         try: float(value)
         except (TypeError,ValueError):
