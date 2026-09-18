@@ -5,6 +5,7 @@ from tradeguard.certification import (
     CERTIFICATION_PASS,
     EVIDENCE_BUNDLE_SCHEMA,
     build_evidence_bundle,
+    validate_evidence_bundle,
     verify_evidence_bundle,
 )
 from tradeguard.cli import build_payload
@@ -65,3 +66,52 @@ def test_material_evidence_change_changes_bundle_fingerprint(tmp_path):
     first = build_evidence_bundle(_evidence(tmp_path, run_id="run-1"))
     second = build_evidence_bundle(_evidence(tmp_path, run_id="run-2"))
     assert first["bundle_fingerprint"] != second["bundle_fingerprint"]
+
+
+def test_bundle_accepts_signed_additive_top_level_member(tmp_path):
+    from tradeguard.evidence import _sha256
+
+    bundle = build_evidence_bundle(_evidence(tmp_path))
+    bundle["future_optional_member"] = {"version": 1}
+    unsigned = deepcopy(bundle)
+    unsigned.pop("bundle_fingerprint")
+    bundle["bundle_fingerprint"] = _sha256(unsigned)
+
+    assert validate_evidence_bundle(bundle)
+    assert verify_evidence_bundle(bundle)
+
+
+def test_bundle_additive_member_tampering_fails_closed(tmp_path):
+    from tradeguard.evidence import _sha256
+
+    bundle = build_evidence_bundle(_evidence(tmp_path))
+    bundle["future_optional_member"] = {"version": 1}
+    unsigned = deepcopy(bundle)
+    unsigned.pop("bundle_fingerprint")
+    bundle["bundle_fingerprint"] = _sha256(unsigned)
+    assert verify_evidence_bundle(bundle)
+
+    bundle["future_optional_member"]["version"] = 2
+    assert not verify_evidence_bundle(bundle)
+
+
+def test_bundle_validator_rejects_malformed_certification_shape(tmp_path):
+    bundle = build_evidence_bundle(_evidence(tmp_path))
+
+    broken_scope = deepcopy(bundle)
+    broken_scope["certification"]["scope"] = "other"
+    assert not validate_evidence_bundle(broken_scope)
+
+    broken_status = deepcopy(bundle)
+    broken_status["certification"]["status"] = "MAYBE"
+    assert not validate_evidence_bundle(broken_status)
+
+    broken_checks = deepcopy(bundle)
+    broken_checks["certification"]["checks"]["future_check"] = True
+    assert not validate_evidence_bundle(broken_checks)
+
+
+def test_bundle_validator_rejects_invalid_expected_parent_digest(tmp_path):
+    bundle = build_evidence_bundle(_evidence(tmp_path))
+    bundle["expected_parent_fingerprint"] = "not-a-digest"
+    assert not validate_evidence_bundle(bundle)

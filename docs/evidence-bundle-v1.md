@@ -29,7 +29,7 @@ Current v1 checks are intentionally narrow and fail closed:
 
 All required checks must pass for `certification.status` to be `PASS`. Otherwise it is `FAIL`. There are no heuristic scores and no profitability threshold.
 
-`verify_evidence_bundle()` verifies the bundle fingerprint and independently rebuilds the deterministic certification result. A modified bundle or modified embedded evidence fails verification unless a new bundle is explicitly built; rebuilding does not convert invalid Trial Ledger evidence into a PASS.
+`validate_evidence_bundle()` validates the established v1 members and independently recomputes the documented certification semantics. `verify_evidence_bundle()` then verifies the stored fingerprint over the actual supplied unsigned bundle, including unknown additive members. Signed additive members are therefore compatible, while malformed established members, inconsistent certification semantics, or any post-signing tampering fail closed.
 
 ## CLI
 
