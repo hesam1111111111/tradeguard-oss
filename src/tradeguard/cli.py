@@ -7,7 +7,7 @@ from math import isfinite
 from pathlib import Path
 
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
-from .certification import build_evidence_bundle, verify_evidence_bundle
+from .certification import CERTIFICATION_PASS, build_evidence_bundle, verify_evidence_bundle
 from .diagnostics import diagnose_journal
 from .evidence import build_trial_evidence
 from .importers import import_mapped_csv
@@ -137,7 +137,7 @@ def _mapping_entry(value: str) -> tuple[str, str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate and analyze a trading journal CSV.")
-    parser.add_argument("csv_path", help="Path to the trading journal CSV file")
+    parser.add_argument("csv_path", nargs="?", help="Path to the trading journal CSV file")
     parser.add_argument("--json", action="store_true", help="Emit JSON output")
     parser.add_argument("--output", help="Write the deterministic JSON report to a file")
     parser.add_argument("--evidence-output", metavar="JSON", help="Write a deterministic trial-ledger evidence bundle")
@@ -162,12 +162,17 @@ def main() -> None:
             bundle = json.loads(Path(args.verify_certification).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             parser.error(str(exc))
-        valid = verify_evidence_bundle(bundle)
+        valid = isinstance(bundle, dict) and verify_evidence_bundle(bundle)
+        status = bundle.get("certification", {}).get("status") if isinstance(bundle, dict) and isinstance(bundle.get("certification"), dict) else None
+        passed = valid and status == CERTIFICATION_PASS
         if args.json:
-            print(json.dumps({"valid": valid}, sort_keys=True))
+            print(json.dumps({"valid": valid, "status": status, "passed": passed}, sort_keys=True))
         else:
-            print(f"TradeGuard evidence bundle valid: {valid}")
-        raise SystemExit(0 if valid else 1)
+            print(f"TradeGuard evidence bundle valid: {valid}; certification status: {status}; gate passed: {passed}")
+        raise SystemExit(0 if passed else 1)
+
+    if args.csv_path is None:
+        parser.error("csv_path is required unless --verify-certification is used")
 
     if args.certification_output and not args.evidence_output:
         parser.error("--certification-output requires --evidence-output")
