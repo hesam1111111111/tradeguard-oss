@@ -6,6 +6,14 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Added
+- Formal `tradeguard.reconciliation.v1` compatibility contract documentation.
+- Executable consumer-contract fixtures for reconciliation, Trial Ledger, and Evidence Bundle v1 established members, deterministic serialization, additive-member tolerance, and legacy Trial Ledger source-provenance compatibility.
+
+### Changed
+- Trial Ledger and Evidence Bundle documentation now define established member/type and additive-compatibility rules explicitly.
+- Evidence Bundle CLI documentation now reflects that `--verify-certification` requires no CSV input.
+
 ## [0.15.0] - 2026-09-18
 
 ### Added
