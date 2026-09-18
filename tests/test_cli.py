@@ -439,3 +439,23 @@ def test_report_source_fingerprint_hashes_exact_file_bytes(tmp_path: Path):
     import hashlib
     assert payload["source_fingerprint"] == hashlib.sha256(journal.read_bytes()).hexdigest()
     assert len(payload["source_fingerprint"]) == 64
+
+
+def test_reconciliation_binds_exact_source_artifacts_without_changing_semantic_result(tmp_path: Path):
+    import hashlib
+    from tradeguard.cli import _reconciliation_payload
+
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    logical = "symbol,side,entry,exit,stop_loss,quantity\nBTCUSDT,long,100,110,95,1\n"
+    reference.write_bytes(logical.encode("utf-8"))
+    candidate.write_bytes(logical.replace("\n", "\r\n").encode("utf-8"))
+
+    payload = _reconciliation_payload(str(reference), str(candidate))
+
+    assert payload["reconciliation_schema"] == "tradeguard.reconciliation.v1"
+    assert payload["clean"] is True
+    assert payload["reference_fingerprint"] == payload["candidate_fingerprint"]
+    assert payload["reference_source_fingerprint"] == hashlib.sha256(reference.read_bytes()).hexdigest()
+    assert payload["candidate_source_fingerprint"] == hashlib.sha256(candidate.read_bytes()).hexdigest()
+    assert payload["reference_source_fingerprint"] != payload["candidate_source_fingerprint"]
