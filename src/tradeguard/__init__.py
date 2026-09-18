@@ -13,6 +13,7 @@ from .analytics import (
 from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
+from .reconciliation import FieldMismatch, ReconciliationResult, RecordDelta, reconcile_journals, reconciliation_fingerprint
 from .risk import (
     Exposure,
     InitialRiskAnalysis,
@@ -40,6 +41,9 @@ __all__ = [
     "InitialRiskDiagnostic",
     "JournalMetrics",
     "JournalSegment",
+    "FieldMismatch",
+    "ReconciliationResult",
+    "RecordDelta",
     "RiskBreach",
     "RiskBudget",
     "RiskBudgetBreach",
@@ -60,6 +64,8 @@ __all__ = [
     "find_duplicate_trades",
     "import_mapped_csv",
     "journal_fingerprint",
+    "reconcile_journals",
+    "reconciliation_fingerprint",
     "trade_initial_risk",
     "trade_notional",
     "validate_trades",
