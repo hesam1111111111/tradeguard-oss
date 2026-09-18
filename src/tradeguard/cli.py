@@ -6,7 +6,7 @@ from dataclasses import asdict
 from math import isfinite
 from pathlib import Path
 
-from .adapters import get_import_profile
+from .adapters import available_import_profiles, get_import_profile
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .certification import CERTIFICATION_PASS, build_evidence_bundle, verify_evidence_bundle
 from .diagnostics import diagnose_journal
@@ -156,6 +156,8 @@ def main() -> None:
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
     parser.add_argument("--import-profile", metavar="PROFILE", help="Explicit named CSV import profile; cannot be combined with --map")
+    parser.add_argument("--list-import-profiles", action="store_true", help="List available explicit CSV import profiles and exit")
+    parser.add_argument("--describe-import-profile", metavar="PROFILE", help="Show the exact mapping for one explicit CSV import profile and exit")
     parser.add_argument("--import-preview", action="store_true", help="Preview an explicit mapped CSV import without running journal analytics")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
@@ -164,6 +166,33 @@ def main() -> None:
     parser.add_argument("--max-trade-initial-risk", type=_positive_finite)
     parser.add_argument("--max-total-initial-risk", type=_positive_finite)
     args = parser.parse_args()
+
+    if args.list_import_profiles or args.describe_import_profile:
+        if args.list_import_profiles and args.describe_import_profile:
+            parser.error("--list-import-profiles cannot be combined with --describe-import-profile")
+        if args.csv_path is not None:
+            parser.error("csv_path cannot be combined with import-profile introspection")
+        if args.list_import_profiles:
+            payload = {"profiles": list(available_import_profiles())}
+            if args.json:
+                print(json.dumps(payload, sort_keys=True))
+            else:
+                print("TradeGuard OSS import profiles")
+                for name in payload["profiles"]:
+                    print(f"- {name}")
+            return
+        try:
+            mapping = dict(get_import_profile(args.describe_import_profile))
+        except ValueError as exc:
+            parser.error(str(exc))
+        payload = {"profile": args.describe_import_profile, "mapping": mapping}
+        if args.json:
+            print(json.dumps(payload, sort_keys=True))
+        else:
+            print(f"TradeGuard OSS import profile: {args.describe_import_profile}")
+            for canonical, source in mapping.items():
+                print(f"- {canonical}={source}")
+        return
 
     if args.verify_certification:
         try:

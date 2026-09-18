@@ -400,3 +400,34 @@ def test_cli_trial_evidence_records_selected_import_profile(tmp_path: Path, monk
     assert data["configuration"]["import_profile"] == "generic_ticket_export"
     assert data["configuration"]["import_mapping"] is None
     assert data["import"]["mode"] == "explicit_profile_csv"
+
+
+def test_cli_lists_import_profiles_without_csv(monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--list-import-profiles", "--json"])
+    main()
+    data = json.loads(capsys.readouterr().out)
+    assert data == {"profiles": ["generic_ohlc", "generic_ticket_export"]}
+
+
+def test_cli_describes_import_profile_without_csv(monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--describe-import-profile", "generic_ticket_export", "--json"])
+    main()
+    data = json.loads(capsys.readouterr().out)
+    assert data["profile"] == "generic_ticket_export"
+    assert data["mapping"]["symbol"] == "Ticker"
+    assert data["mapping"]["closed_at"] == "CloseTime"
+
+
+def test_cli_profile_introspection_unknown_profile_fails_closed(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--describe-import-profile", "unknown"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+
+
+def test_cli_profile_introspection_rejects_csv_path(tmp_path: Path, monkeypatch):
+    source = _ticket_profile_csv(tmp_path)
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(source), "--list-import-profiles"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2

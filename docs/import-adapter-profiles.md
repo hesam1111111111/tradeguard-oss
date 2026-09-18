@@ -14,3 +14,17 @@ result = import_csv_with_profile("journal.csv", "generic_ticket_export")
 Built-in profiles use synthetic generic export shapes so the public package does not imply compatibility with a broker format that has not been independently validated. A broker- or journal-specific profile should be added only with a sanitized fixture, documented export/version assumptions, deterministic tests against canonical TradeGuard CSV, and no private financial data.
 
 Unknown profile names fail closed. The underlying mapped-import diagnostics, provenance, source-integrity checks, and completeness rules remain authoritative.
+
+
+## CLI introspection
+
+Profiles are discoverable without supplying or reading a journal:
+
+```bash
+tradeguard --list-import-profiles
+tradeguard --list-import-profiles --json
+tradeguard --describe-import-profile generic_ticket_export
+tradeguard --describe-import-profile generic_ticket_export --json
+```
+
+Listing order is deterministic. Description output exposes the exact immutable canonical-to-source mapping. Unknown profile names fail closed. Introspection does not import data or run analytics.
