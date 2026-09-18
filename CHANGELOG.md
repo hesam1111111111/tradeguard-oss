@@ -6,6 +6,10 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+### Fixed
+- Trial Ledger evidence creation accepts otherwise-valid legacy `tradeguard.report.v1` producers that predate the additive `source_fingerprint` member; unavailable source-artifact provenance is represented as `null`, never fabricated.
+- Present `source_fingerprint` values remain strictly validated and bound into deterministic evidence.
+
 ## [0.13.0] - 2026-09-18
 
 ### Added
