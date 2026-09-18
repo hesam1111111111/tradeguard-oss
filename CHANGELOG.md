@@ -7,6 +7,9 @@ The project follows semantic versioning while the public API is still evolving.
 ## [Unreleased]
 
 ### Added
+- Maintainer evidence dossier linking representative issue/PR, CI, compatibility, release, and community-validation workflows for external repository review.
+
+### Added
 - Executable end-to-end integrity demo covering deterministic analysis, reconciliation drift, CI-style failure, Trial Ledger evidence, certification, and independent verification using synthetic fixtures.
 
 ### Changed
