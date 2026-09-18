@@ -65,6 +65,8 @@ If you try TradeGuard with a privacy-safe or synthetic export layout and find im
 
 For a complete reproducible walkthrough of analysis → reconciliation → drift gate → Trial Ledger → certification → verification, see [`docs/end-to-end-integrity-demo.md`](docs/end-to-end-integrity-demo.md).
 
+To use TradeGuard directly as a pull-request CI gate in another repository, copy the [`GitHub Actions starter`](docs/github-actions-starter.md).
+
 ## Install for development
 
 ```bash
