@@ -54,9 +54,8 @@ def _segments_payload(trades, temporal_period: str | None = None) -> dict:
 
 
 def _import_payload(result, profile: str | None = None) -> dict:
-    return {
+    payload = {
         "mode": "explicit_profile_csv" if profile is not None else "explicit_mapped_csv",
-        "profile": profile,
         "complete": result.complete,
         "source_rows": result.source_rows,
         "imported_rows": result.imported_rows,
@@ -64,6 +63,9 @@ def _import_payload(result, profile: str | None = None) -> dict:
         "mapping": {canonical: source for canonical, source in result.mapping},
         "diagnostics": [asdict(item) for item in result.diagnostics],
     }
+    if profile is not None:
+        payload["profile"] = profile
+    return payload
 
 
 def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_period: str | None = None, import_mapping: dict[str, str] | None = None, import_profile: str | None = None) -> dict:
