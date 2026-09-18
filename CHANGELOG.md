@@ -7,6 +7,9 @@ The project follows semantic versioning while the public API is still evolving.
 ## [Unreleased]
 
 ### Added
+- Factual Codex for Open Source application packet with reviewer evidence path, draft form answers, and explicit adoption-evidence boundaries.
+
+### Added
 - Maintainer evidence dossier linking representative issue/PR, CI, compatibility, release, and community-validation workflows for external repository review.
 
 ### Added
