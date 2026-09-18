@@ -25,6 +25,7 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Win rate, net PnL, expectancy, gross profit/loss, profit factor, breakeven count, best/worst trade, and closed-trade maximum drawdown
 - Stop-loss and data-quality validation
 - Deterministic SHA-256 journal fingerprints
+- Deterministic journal reconciliation with order-independent audit fingerprints, duplicate-aware deltas, and field-level drift evidence
 - Exact duplicate-trade detection and blocking integrity diagnostics
 - Entry-notional portfolio exposure by normalized symbol and side
 - Gross/net notional exposure and configurable portfolio, symbol, and trade notional limits
@@ -96,6 +97,15 @@ tradeguard examples/mapped_journal.csv \
 
 Mappings are explicit by design. TradeGuard does not guess aliases or infer ambiguous columns. The report adds an `import` provenance section with source/imported/rejected row counts, the exact mapping, completeness, and source-indexed diagnostics. If mapped import is incomplete, metrics/risk/segments are suppressed rather than computed from a partial dataset.
 
+Reconcile a canonical journal against another export or migration result:
+
+```bash
+tradeguard baseline.csv --reconcile-with migrated.csv --json
+tradeguard baseline.csv --reconcile-with migrated.csv --output reconciliation.json --fail-on-drift
+```
+
+Reconciliation is deterministic and offline. Row order does not matter, duplicate multiplicity is preserved, and uniquely identifiable changed trades report field-level differences. The `--fail-on-drift` switch exits with status 1 when differences are found, making the command usable as a CI or migration integrity gate. Reconciliation uses a separate `tradeguard.reconciliation.v1` machine-readable envelope and does not modify the existing analytics report contract.
+
 Add deterministic temporal analytics based on the recorded `closed_at` value:
 
 ```bash
@@ -119,6 +129,8 @@ from tradeguard import (
     check_risk_limits,
     import_mapped_csv,
     journal_fingerprint,
+    reconcile_journals,
+    reconciliation_fingerprint,
     validate_trades,
 )
 
@@ -129,6 +141,11 @@ print(analyze_trades(trades))
 print(analyze_by_closed_period(trades, "month"))
 print(aggregate_exposure(trades))
 print(check_risk_limits(trades, RiskLimits(max_gross_notional=10000)))
+
+candidate = [Trade("BTCUSDT", "long", entry=60000, exit=61400, stop_loss=59000, quantity=0.1)]
+audit = reconcile_journals(trades, candidate)
+print(audit.clean, audit.mismatches)
+print(reconciliation_fingerprint(trades))
 
 mapped = import_mapped_csv(
     "examples/mapped_journal.csv",
