@@ -6,6 +6,27 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-18
+
+### Added
+- Explicit `--import-profile` CLI selection for reusable CSV import profiles, including read-only import preview support.
+- Deterministic CLI profile introspection with `--list-import-profiles` and `--describe-import-profile`, including machine-readable JSON output.
+- Exact SHA-256 `source_fingerprint` for input artifact bytes in `tradeguard.report.v1`.
+- Trial Ledger binding to both exact source-artifact identity and canonical journal identity.
+- Regression coverage proving byte-different but semantically equivalent CSV files retain distinct source provenance.
+
+### Changed
+- Profile-based import provenance records the selected profile and resolved explicit mapping.
+- Trial Ledger configuration records explicit profile selection.
+- Report contract documentation distinguishes source-artifact identity from canonical journal semantics.
+
+### Compatibility
+- Existing `--map` behavior remains supported and mutually exclusive with `--import-profile`.
+- `source_fingerprint` is an additive `tradeguard.report.v1` member; existing schema identifiers and established field semantics are preserved.
+- No changes to `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, or `tradeguard.evidence-bundle.v1` schema identifiers.
+- No live broker connectivity, credentials, strategy logic, signals, or order execution are introduced.
+
+
 ## [0.12.0] - 2026-09-18
 
 ### Added
