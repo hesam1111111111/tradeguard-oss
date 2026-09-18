@@ -74,3 +74,24 @@ def test_run_id_and_parent_fingerprint_are_explicitly_validated(tmp_path):
         build_trial_evidence("  ", report)
     with pytest.raises(ValueError, match="parent_evidence_fingerprint"):
         build_trial_evidence("run-1", report, parent_evidence_fingerprint="not-a-digest")
+
+
+def test_source_artifact_change_changes_evidence_even_when_journal_semantics_match(tmp_path):
+    first_path = tmp_path / "first.csv"
+    second_path = tmp_path / "second.csv"
+    first_path.write_bytes(b"symbol,side,entry,exit,stop_loss,quantity\nBTCUSDT,long,100,110,95,1\n")
+    second_path.write_bytes(b"symbol,side,entry,exit,stop_loss,quantity\r\nBTCUSDT,long,100,110,95,1\r\n")
+    first_report = build_payload(str(first_path))
+    second_report = build_payload(str(second_path))
+    assert first_report["journal_fingerprint"] == second_report["journal_fingerprint"]
+    assert first_report["source_fingerprint"] != second_report["source_fingerprint"]
+    first = build_trial_evidence("run-1", first_report)
+    second = build_trial_evidence("run-1", second_report)
+    assert first["evidence_fingerprint"] != second["evidence_fingerprint"]
+
+
+def test_source_fingerprint_tampering_invalidates_evidence(tmp_path):
+    evidence = build_trial_evidence("run-1", _report(tmp_path, "BTCUSDT,long,100,110,95,1\n"))
+    tampered = deepcopy(evidence)
+    tampered["source_fingerprint"] = "0" * 64
+    assert not verify_trial_evidence(tampered)
