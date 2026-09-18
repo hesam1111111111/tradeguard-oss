@@ -214,3 +214,26 @@ def test_cli_reconciliation_fail_on_drift_is_ci_friendly(tmp_path: Path, monkeyp
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 1
+
+
+def test_cli_writes_trial_evidence_bundle(tmp_path: Path, monkeypatch):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    evidence = tmp_path / "evidence.json"
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(journal), "--evidence-output", str(evidence),
+        "--run-id", "oos-0042", "--max-total-initial-risk", "20",
+    ])
+    main()
+    data = json.loads(evidence.read_text(encoding="utf-8"))
+    assert data["trial_ledger_schema"] == "tradeguard.trial-ledger.v1"
+    assert data["run_id"] == "oos-0042"
+    assert data["configuration"]["risk_budget"]["max_total_initial_risk"] == 20.0
+    assert len(data["evidence_fingerprint"]) == 64
+
+
+def test_cli_trial_evidence_requires_explicit_run_id(tmp_path: Path, monkeypatch):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(journal), "--evidence-output", str(tmp_path / "e.json")])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2

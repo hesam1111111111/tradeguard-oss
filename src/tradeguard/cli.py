@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .diagnostics import diagnose_journal
+from .evidence import build_trial_evidence
 from .importers import import_mapped_csv
 from .io import load_trades_csv
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
@@ -138,6 +139,9 @@ def main() -> None:
     parser.add_argument("csv_path", help="Path to the trading journal CSV file")
     parser.add_argument("--json", action="store_true", help="Emit JSON output")
     parser.add_argument("--output", help="Write the deterministic JSON report to a file")
+    parser.add_argument("--evidence-output", metavar="JSON", help="Write a deterministic trial-ledger evidence bundle")
+    parser.add_argument("--run-id", help="Explicit run/experiment identifier for --evidence-output")
+    parser.add_argument("--parent-evidence-fingerprint", help="Optional parent evidence SHA-256 for evidence-chain linkage")
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
@@ -149,9 +153,16 @@ def main() -> None:
     parser.add_argument("--max-total-initial-risk", type=_positive_finite)
     args = parser.parse_args()
 
+    if args.evidence_output and not args.run_id:
+        parser.error("--run-id is required with --evidence-output")
+    if (args.run_id or args.parent_evidence_fingerprint) and not args.evidence_output:
+        parser.error("--run-id and --parent-evidence-fingerprint require --evidence-output")
+
     if args.reconcile_with:
         if args.mappings:
             parser.error("--map cannot be combined with --reconcile-with")
+        if args.evidence_output:
+            parser.error("--evidence-output cannot be combined with --reconcile-with")
         try:
             payload = _reconciliation_payload(args.csv_path, args.reconcile_with)
         except ValueError as exc:
@@ -193,6 +204,22 @@ def main() -> None:
 
     if args.output:
         Path(args.output).write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+    if args.evidence_output:
+        try:
+            evidence = build_trial_evidence(
+                args.run_id,
+                payload,
+                configuration={
+                    "group_closed_by": args.group_closed_by,
+                    "import_mapping": import_mapping,
+                    "risk_limits": asdict(limits) if limits is not None else None,
+                    "risk_budget": asdict(budget) if budget is not None else None,
+                },
+                parent_evidence_fingerprint=args.parent_evidence_fingerprint,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        Path(args.evidence_output).write_text(json.dumps(evidence, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True, default=str))
         return

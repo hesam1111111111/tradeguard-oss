@@ -10,6 +10,7 @@ from .analytics import (
     analyze_by_symbol,
     analyze_trades,
 )
+from .evidence import TRIAL_LEDGER_SCHEMA, build_trial_evidence, verify_trial_evidence
 from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
 from .models import Trade
@@ -49,6 +50,7 @@ __all__ = [
     "RiskBudgetBreach",
     "RiskBudgetEvaluation",
     "RiskLimits",
+    "TRIAL_LEDGER_SCHEMA",
     "TemporalAnalysis",
     "TemporalDiagnostic",
     "Trade",
@@ -59,6 +61,7 @@ __all__ = [
     "analyze_by_symbol",
     "analyze_initial_risk",
     "analyze_trades",
+    "build_trial_evidence",
     "check_risk_limits",
     "evaluate_risk_budget",
     "find_duplicate_trades",
@@ -69,6 +72,7 @@ __all__ = [
     "trade_initial_risk",
     "trade_notional",
     "validate_trades",
+    "verify_trial_evidence",
 ]
 
 __version__ = "0.8.0"
