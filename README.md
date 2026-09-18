@@ -44,6 +44,25 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Deterministic JSON report export
 - Automated tests across Python 3.10–3.13 plus distribution wheel smoke-install validation
 
+## Quick start — no repository clone required
+
+After installation, create a tiny synthetic journal and run TradeGuard immediately:
+
+```bash
+python -c "from pathlib import Path; Path('tradeguard-demo.csv').write_text('symbol,side,entry,exit,stop_loss,quantity\nBTCUSDT,long,100,110,95,1\nETHUSDT,short,50,45,55,2\n', encoding='utf-8')"
+tradeguard tradeguard-demo.csv
+```
+
+For machine-readable output:
+
+```bash
+tradeguard tradeguard-demo.csv --json
+```
+
+A successful first run demonstrates that the installed package can parse a journal, validate its integrity, compute deterministic analytics, and emit a journal fingerprint on your machine. The example is synthetic and contains no private trading data.
+
+If you try TradeGuard with a privacy-safe or synthetic export layout and find importer friction, a reproducible edge case, a report-consumer problem, or documentation confusion, please add it to [community validation issue #34](https://github.com/hesam1111111111/tradeguard-oss/issues/34). Do not post credentials, account identifiers, private broker exports, or personal financial records.
+
 ## Install for development
 
 ```bash
