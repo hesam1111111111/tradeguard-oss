@@ -97,4 +97,4 @@ __all__ = [
     "verify_trial_evidence",
 ]
 
-__version__ = "0.14.0"
+__version__ = "0.15.0"
