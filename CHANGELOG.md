@@ -6,6 +6,23 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-18
+
+### Added
+- Fail-closed mapped CSV source-structure checks for duplicate headers and unexpected extra row values.
+- Explicit immutable reusable CSV import profiles with public listing, selection, and profile-import APIs.
+- Synthetic adapter fixtures proving profile imports match equivalent canonical TradeGuard CSV.
+- Executable `tradeguard.report.v1` consumer compatibility tests covering established top-level members/types, deterministic byte-stable JSON serialization, and additive unknown-field tolerance.
+
+### Changed
+- README and contract documentation now describe source-integrity checks, explicit adapter-profile extension rules, and executable consumer compatibility guarantees.
+
+### Compatibility
+- Existing explicit `--map` behavior remains supported.
+- No changes to `tradeguard.report.v1`, `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, or `tradeguard.evidence-bundle.v1` schema identifiers or established semantics.
+- No live broker connectivity, credentials, strategy logic, signals, or order execution are introduced.
+
+
 ## [0.11.1] - 2026-09-18
 
 ### Fixed
