@@ -280,3 +280,24 @@ def test_cli_verification_fails_for_tampered_bundle(tmp_path: Path, monkeypatch)
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 1
+
+
+def test_cli_import_preview_reports_rejections_without_running_analytics(tmp_path: Path, monkeypatch):
+    source = tmp_path / "external.csv"
+    source.write_text(
+        "ticker,direction,open_px,close_px\nBTCUSDT,long,100,110\nETHUSDT,short,bad,45\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "preview.json"
+    monkeypatch.setattr("sys.argv", [
+        "tradeguard", str(source), "--import-preview", "--output", str(output),
+        "--map", "symbol=ticker", "--map", "side=direction", "--map", "entry=open_px", "--map", "exit=close_px",
+    ])
+    main()
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["preview"] is True
+    assert data["source_rows"] == 2
+    assert data["imported_rows"] == 1
+    assert data["rejected_rows"] == 1
+    assert data["diagnostics"][0]["code"] == "invalid_number"
+    assert "metrics" not in data
