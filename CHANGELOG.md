@@ -6,34 +6,32 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
-### Added
-- Dated external-evidence snapshot that separates verified public distribution/indexing signals from unknown adoption metrics.
-
-### Added
-- Factual Codex for Open Source application packet with reviewer evidence path, draft form answers, and explicit adoption-evidence boundaries.
-
-### Added
-- Maintainer evidence dossier linking representative issue/PR, CI, compatibility, release, and community-validation workflows for external repository review.
-
-### Added
-- Executable end-to-end integrity demo covering deterministic analysis, reconciliation drift, CI-style failure, Trial Ledger evidence, certification, and independent verification using synthetic fixtures.
-
-### Changed
-- Added a zero-clone PyPI quickstart and a direct privacy-safe feedback path to community validation issue #34.
+## [0.16.0] - 2026-09-18
 
 ### Added
 - Public `validate_evidence_bundle()` API for established Evidence Bundle v1 semantic validation.
+- Formal `tradeguard.reconciliation.v1` compatibility contract documentation.
+- Executable consumer-contract fixtures for reconciliation, Trial Ledger, and Evidence Bundle v1 established members, deterministic serialization, additive-member tolerance, and legacy Trial Ledger source-provenance compatibility.
+- Executable end-to-end integrity demo covering deterministic analysis, reconciliation drift, CI-style failure, Trial Ledger evidence, certification, and independent verification using synthetic fixtures.
+- Maintainer evidence dossier linking representative issue/PR, CI, compatibility, release, and community-validation workflows for external repository review.
+- Factual Codex for Open Source application packet with reviewer evidence path, draft form answers, and explicit adoption-evidence boundaries.
+- Dated external-evidence snapshot separating verified public distribution/indexing signals from unknown adoption metrics.
+
+### Changed
+- Added a zero-clone PyPI quickstart and direct privacy-safe feedback path to community validation issue #34.
+- Trial Ledger and Evidence Bundle documentation now define established member/type and additive-compatibility rules explicitly.
+- Evidence Bundle CLI documentation now reflects that `--verify-certification` requires no CSV input.
 
 ### Fixed
 - Evidence Bundle v1 verification now accepts fingerprint-covered unknown additive top-level members while still failing closed for malformed established fields, inconsistent certification semantics, and tampering.
 
-### Added
-- Formal `tradeguard.reconciliation.v1` compatibility contract documentation.
-- Executable consumer-contract fixtures for reconciliation, Trial Ledger, and Evidence Bundle v1 established members, deterministic serialization, additive-member tolerance, and legacy Trial Ledger source-provenance compatibility.
+### Compatibility
+- Existing `tradeguard.report.v1`, `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, and `tradeguard.evidence-bundle.v1` identifiers remain unchanged.
+- Valid existing evidence remains compatible; the release adds documentation, validation, and reviewer-facing workflows without expanding into live execution.
 
-### Changed
-- Trial Ledger and Evidence Bundle documentation now define established member/type and additive-compatibility rules explicitly.
-- Evidence Bundle CLI documentation now reflects that `--verify-certification` requires no CSV input.
+### Scope
+- TradeGuard remains an offline/local-file validation, analytics, reconciliation, provenance, and evidence-integrity toolkit.
+- No broker connectivity, credentials, signals, strategy logic, order execution, broker/exchange attestation, identity attestation, or profitability claims are introduced.
 
 ## [0.15.0] - 2026-09-18
 
