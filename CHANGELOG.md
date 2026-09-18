@@ -4,7 +4,22 @@ All notable changes to TradeGuard OSS are documented in this file.
 
 The project follows semantic versioning while the public API is still evolving.
 
-## [Unreleased]\n\n## [0.11.0] - 2026-09-18\n\n### Added\n- Deterministic field-level mapped CSV diagnostics with stable codes for missing required values, invalid numbers, and invalid datetimes.\n- Read-only `--import-preview` workflow reporting source, importable, and rejected row counts without running analytics.\n- Canonical field, source row, and offending-value evidence for mapped-import failures.\n\n### Fixed\n- `--verify-certification` is now a fail-closed CLI gate: exit 0 requires both a valid bundle and certification status `PASS`.\n- Certification verification no longer requires an unrelated positional CSV path.\n- Non-object certification JSON fails closed instead of reaching object-only verification logic.\n\n### Compatibility\n- `tradeguard.report.v1`, `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, and `tradeguard.evidence-bundle.v1` remain backward compatible.\n- `verify_evidence_bundle()` retains integrity/consistency semantics; the stricter PASS requirement applies to the CLI certification gate.\n\n### Scope\n- Import preview and certification verification remain local/offline and do not require broker credentials, live connectivity, signals, or order execution.\n
+## [Unreleased]
+
+## [0.11.1] - 2026-09-18
+
+### Fixed
+- Mapped CSV diagnostics now use explicit canonical field ordering instead of unordered sets, preserving deterministic output across processes and supported Python versions.
+- Whitespace-only mapped numeric and datetime values are handled consistently as blank values, avoiding duplicate or misleading diagnostics.
+- Canonical trade validation now normalizes side values with the same `strip().lower()` contract used by trade normalization and fingerprints.
+- Canonical CSV headers are normalized before row access, preventing schema/loader disagreement for surrounding whitespace.
+- CSV headers that collide after whitespace normalization now fail explicitly instead of being interpreted ambiguously.
+
+### Compatibility
+- No report, reconciliation, Trial Ledger, Evidence Bundle, or diagnostic-code schema changes.
+- This is a backward-compatible patch release.
+
+## [0.11.0] - 2026-09-18\n\n### Added\n- Deterministic field-level mapped CSV diagnostics with stable codes for missing required values, invalid numbers, and invalid datetimes.\n- Read-only `--import-preview` workflow reporting source, importable, and rejected row counts without running analytics.\n- Canonical field, source row, and offending-value evidence for mapped-import failures.\n\n### Fixed\n- `--verify-certification` is now a fail-closed CLI gate: exit 0 requires both a valid bundle and certification status `PASS`.\n- Certification verification no longer requires an unrelated positional CSV path.\n- Non-object certification JSON fails closed instead of reaching object-only verification logic.\n\n### Compatibility\n- `tradeguard.report.v1`, `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, and `tradeguard.evidence-bundle.v1` remain backward compatible.\n- `verify_evidence_bundle()` retains integrity/consistency semantics; the stricter PASS requirement applies to the CLI certification gate.\n\n### Scope\n- Import preview and certification verification remain local/offline and do not require broker credentials, live connectivity, signals, or order execution.\n
 
 ## [0.10.0] - 2026-09-18
 
