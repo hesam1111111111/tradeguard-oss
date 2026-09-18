@@ -61,7 +61,7 @@ def test_import_mapped_csv_rejects_invalid_rows_explicitly(tmp_path: Path):
     assert result.rejected_rows == 1
     assert result.source_rows == result.imported_rows + result.rejected_rows
     assert result.complete is False
-    assert result.diagnostics[0].code == "invalid_mapped_row"
+    assert result.diagnostics[0].code == "invalid_number"\n    assert result.diagnostics[0].field == "entry"\n    assert result.diagnostics[0].value == "not-a-number"
     assert result.diagnostics[0].source_row == 3
 
 
