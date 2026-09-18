@@ -64,10 +64,7 @@ def _journal(tmp_path: Path, name: str, rows: str) -> Path:
 def _reconciliation(tmp_path: Path) -> dict:
     reference = _journal(tmp_path, "reference.csv", "BTCUSDT,long,100,110,95,1\n")
     candidate = _journal(tmp_path, "candidate.csv", "BTCUSDT,long,100,109,95,1\n")
-    payload = _reconciliation_payload(str(reference), str(candidate))
-    payload["reference"] = "reference.csv"
-    payload["candidate"] = "candidate.csv"
-    return payload
+    return _reconciliation_payload(str(reference), str(candidate))
 
 
 def _trial(tmp_path: Path) -> dict:
