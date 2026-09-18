@@ -6,6 +6,25 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-18
+
+### Added
+- Versioned `tradeguard.trial-ledger.v1` deterministic evidence contract.
+- Explicit caller-owned run identifiers and optional parent evidence fingerprint linkage.
+- SHA-256 evidence fingerprints and local tamper verification through the public API.
+- Fail-closed evidence creation when journal validation, duplicate integrity, or mapped-import completeness makes analysis unsafe.
+- CLI evidence export with `--evidence-output`, `--run-id`, and optional `--parent-evidence-fingerprint`.
+- Evidence capture of analysis configuration, derived metrics, diagnostics, risk results, segments, and import provenance.
+- Contract documentation and regression coverage for determinism, material drift, chain verification, tampering, invalid input, and CLI behavior.
+
+### Compatibility
+- `tradeguard.report.v1` and `tradeguard.reconciliation.v1` remain unchanged.
+- Trial Ledger is an additive local evidence layer and does not claim broker verification, identity attestation, or live execution provenance.
+
+### Scope
+- No broker credentials, remote service, live synchronization, signals, or order execution are required or included.
+
+
 ## [0.8.0] - 2026-09-18
 
 ### Added
