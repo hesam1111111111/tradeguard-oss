@@ -114,3 +114,33 @@ def test_import_mapped_csv_reports_field_level_diagnostics(tmp_path: Path):
         ("missing_required_value", 3, "symbol"),
     ]
     assert result.diagnostics[0].value == "bad"
+
+
+def test_import_diagnostics_use_canonical_order_and_ignore_blank_numeric_duplicates(tmp_path: Path):
+    source = _write(
+        tmp_path / "external.csv",
+        "ticker,direction,open_px,close_px,stop,qty,opened,closed\n"
+        "BTCUSDT,long,   ,bad-stop,bad-stop,bad-qty,bad-opened,bad-closed\n",
+    )
+    result = import_mapped_csv(
+        source,
+        {
+            "symbol": "ticker",
+            "side": "direction",
+            "entry": "open_px",
+            "exit": "close_px",
+            "stop_loss": "stop",
+            "quantity": "qty",
+            "opened_at": "opened",
+            "closed_at": "closed",
+        },
+    )
+    assert [(d.code, d.field) for d in result.diagnostics] == [
+        ("missing_required_value", "entry"),
+        ("invalid_number", "exit"),
+        ("invalid_number", "stop_loss"),
+        ("invalid_number", "quantity"),
+        ("invalid_datetime", "opened_at"),
+        ("invalid_datetime", "closed_at"),
+    ]
+    assert sum(d.field == "entry" for d in result.diagnostics) == 1
