@@ -10,6 +10,13 @@ from .analytics import (
     analyze_by_symbol,
     analyze_trades,
 )
+from .certification import (
+    CERTIFICATION_FAIL,
+    CERTIFICATION_PASS,
+    EVIDENCE_BUNDLE_SCHEMA,
+    build_evidence_bundle,
+    verify_evidence_bundle,
+)
 from .evidence import TRIAL_LEDGER_SCHEMA, build_trial_evidence, verify_trial_evidence
 from .importers import ImportDiagnostic, ImportResult, import_mapped_csv
 from .integrity import DuplicateTrade, find_duplicate_trades, journal_fingerprint
@@ -34,6 +41,9 @@ from .risk import (
 from .validation import ValidationIssue, validate_trades
 
 __all__ = [
+    "CERTIFICATION_FAIL",
+    "CERTIFICATION_PASS",
+    "EVIDENCE_BUNDLE_SCHEMA",
     "DuplicateTrade",
     "Exposure",
     "ImportDiagnostic",
@@ -61,6 +71,7 @@ __all__ = [
     "analyze_by_symbol",
     "analyze_initial_risk",
     "analyze_trades",
+    "build_evidence_bundle",
     "build_trial_evidence",
     "check_risk_limits",
     "evaluate_risk_budget",
@@ -72,6 +83,7 @@ __all__ = [
     "trade_initial_risk",
     "trade_notional",
     "validate_trades",
+    "verify_evidence_bundle",
     "verify_trial_evidence",
 ]
 

@@ -7,6 +7,7 @@ from math import isfinite
 from pathlib import Path
 
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
+from .certification import build_evidence_bundle, verify_evidence_bundle
 from .diagnostics import diagnose_journal
 from .evidence import build_trial_evidence
 from .importers import import_mapped_csv
@@ -142,6 +143,8 @@ def main() -> None:
     parser.add_argument("--evidence-output", metavar="JSON", help="Write a deterministic trial-ledger evidence bundle")
     parser.add_argument("--run-id", help="Explicit run/experiment identifier for --evidence-output")
     parser.add_argument("--parent-evidence-fingerprint", help="Optional parent evidence SHA-256 for evidence-chain linkage")
+    parser.add_argument("--certification-output", metavar="JSON", help="Write a deterministic evidence certification bundle")
+    parser.add_argument("--verify-certification", metavar="JSON", help="Verify an existing evidence certification bundle and exit")
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
@@ -153,6 +156,20 @@ def main() -> None:
     parser.add_argument("--max-total-initial-risk", type=_positive_finite)
     args = parser.parse_args()
 
+    if args.verify_certification:
+        try:
+            bundle = json.loads(Path(args.verify_certification).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            parser.error(str(exc))
+        valid = verify_evidence_bundle(bundle)
+        if args.json:
+            print(json.dumps({"valid": valid}, sort_keys=True))
+        else:
+            print(f"TradeGuard evidence bundle valid: {valid}")
+        raise SystemExit(0 if valid else 1)
+
+    if args.certification_output and not args.evidence_output:
+        parser.error("--certification-output requires --evidence-output")
     if args.evidence_output and not args.run_id:
         parser.error("--run-id is required with --evidence-output")
     if (args.run_id or args.parent_evidence_fingerprint) and not args.evidence_output:
@@ -220,6 +237,12 @@ def main() -> None:
         except ValueError as exc:
             parser.error(str(exc))
         Path(args.evidence_output).write_text(json.dumps(evidence, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        if args.certification_output:
+            bundle = build_evidence_bundle(
+                evidence,
+                expected_parent_fingerprint=args.parent_evidence_fingerprint,
+            )
+            Path(args.certification_output).write_text(json.dumps(bundle, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True, default=str))
         return
