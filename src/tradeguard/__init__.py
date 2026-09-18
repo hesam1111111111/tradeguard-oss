@@ -1,5 +1,6 @@
 """TradeGuard OSS public package."""
 
+from .adapters import IMPORT_PROFILES, available_import_profiles, get_import_profile, import_csv_with_profile
 from .analytics import (
     JournalMetrics,
     JournalSegment,
@@ -46,6 +47,7 @@ __all__ = [
     "EVIDENCE_BUNDLE_SCHEMA",
     "DuplicateTrade",
     "Exposure",
+    "IMPORT_PROFILES",
     "ImportDiagnostic",
     "ImportResult",
     "InitialRiskAnalysis",
@@ -66,6 +68,7 @@ __all__ = [
     "Trade",
     "ValidationIssue",
     "aggregate_exposure",
+    "available_import_profiles",
     "analyze_by_closed_period",
     "analyze_by_side",
     "analyze_by_symbol",
@@ -76,6 +79,8 @@ __all__ = [
     "check_risk_limits",
     "evaluate_risk_budget",
     "find_duplicate_trades",
+    "get_import_profile",
+    "import_csv_with_profile",
     "import_mapped_csv",
     "journal_fingerprint",
     "reconcile_journals",
