@@ -11,8 +11,10 @@ from .diagnostics import diagnose_journal
 from .importers import import_mapped_csv
 from .io import load_trades_csv
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
+from .reconciliation import reconcile_journals
 
 REPORT_SCHEMA = "tradeguard.report.v1"
+RECONCILIATION_SCHEMA = "tradeguard.reconciliation.v1"
 
 
 def _risk_payload(trades, limits: RiskLimits | None, budget: RiskBudget | None) -> dict:
@@ -81,6 +83,35 @@ def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskB
     }
 
 
+def _reconciliation_payload(reference_path: str, candidate_path: str) -> dict:
+    reference = load_trades_csv(reference_path)
+    candidate = load_trades_csv(candidate_path)
+    result = reconcile_journals(reference, candidate)
+    return {
+        "reconciliation_schema": RECONCILIATION_SCHEMA,
+        "reference": str(reference_path),
+        "candidate": str(candidate_path),
+        "clean": result.clean,
+        "reference_fingerprint": result.reference_fingerprint,
+        "candidate_fingerprint": result.candidate_fingerprint,
+        "reference_rows": result.reference_rows,
+        "candidate_rows": result.candidate_rows,
+        "exact_matches": result.exact_matches,
+        "modified_rows": result.modified_rows,
+        "missing": [{"record": dict(item.record), "count": item.count} for item in result.missing],
+        "unexpected": [{"record": dict(item.record), "count": item.count} for item in result.unexpected],
+        "mismatches": [
+            {
+                "identity": dict(item.identity),
+                "field": item.field,
+                "reference_value": item.reference_value,
+                "candidate_value": item.candidate_value,
+            }
+            for item in result.mismatches
+        ],
+    }
+
+
 def _positive_finite(value: str) -> float:
     try:
         number = float(value)
@@ -107,6 +138,8 @@ def main() -> None:
     parser.add_argument("csv_path", help="Path to the trading journal CSV file")
     parser.add_argument("--json", action="store_true", help="Emit JSON output")
     parser.add_argument("--output", help="Write the deterministic JSON report to a file")
+    parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
+    parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
@@ -115,6 +148,31 @@ def main() -> None:
     parser.add_argument("--max-trade-initial-risk", type=_positive_finite)
     parser.add_argument("--max-total-initial-risk", type=_positive_finite)
     args = parser.parse_args()
+
+    if args.reconcile_with:
+        if args.mappings:
+            parser.error("--map cannot be combined with --reconcile-with")
+        try:
+            payload = _reconciliation_payload(args.csv_path, args.reconcile_with)
+        except ValueError as exc:
+            parser.error(str(exc))
+        if args.output:
+            Path(args.output).write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True, default=str))
+        else:
+            print("TradeGuard OSS reconciliation")
+            print(f"Clean: {payload['clean']}")
+            print(f"Reference rows: {payload['reference_rows']}")
+            print(f"Candidate rows: {payload['candidate_rows']}")
+            print(f"Exact matches: {payload['exact_matches']}")
+            print(f"Modified rows: {payload['modified_rows']}")
+            print(f"Missing rows: {sum(item['count'] for item in payload['missing'])}")
+            print(f"Unexpected rows: {sum(item['count'] for item in payload['unexpected'])}")
+            print(f"Field mismatches: {len(payload['mismatches'])}")
+        if args.fail_on_drift and not payload["clean"]:
+            raise SystemExit(1)
+        return
 
     import_mapping = None
     if args.mappings:
