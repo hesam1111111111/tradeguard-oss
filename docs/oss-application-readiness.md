@@ -21,6 +21,8 @@ The repository uses scoped issues, reviewable branches, pull requests, CI gates,
 
 ## Remaining external signals
 
+A dated evidence log is maintained in [`docs/external-evidence-snapshot.md`](external-evidence-snapshot.md).
+
 Repository quality alone does not establish ecosystem importance or adoption. Useful external evidence includes genuine users, stars/forks, downstream references, bug reports, outside contributions, package/download usage, and documented use cases. These signals should grow organically; they should never be fabricated.
 
 ## Application checklist
