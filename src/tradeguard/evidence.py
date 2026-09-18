@@ -43,6 +43,10 @@ def build_trial_evidence(
         raise ValueError("run_id must be non-blank")
     if report.get("report_schema") != "tradeguard.report.v1":
         raise ValueError("trial evidence requires tradeguard.report.v1")
+    source_fingerprint = report.get("source_fingerprint")
+    if not isinstance(source_fingerprint, str):
+        raise ValueError("report is missing source_fingerprint")
+    _validate_fingerprint(source_fingerprint, "source_fingerprint")
     fingerprint = report.get("journal_fingerprint")
     if not isinstance(fingerprint, str):
         raise ValueError("report is missing journal_fingerprint")
@@ -58,6 +62,7 @@ def build_trial_evidence(
     if imported is not None:
         import_evidence = {
             "mode": imported.get("mode"),
+            "source_fingerprint": source_fingerprint,
             "complete": imported.get("complete"),
             "source_rows": imported.get("source_rows"),
             "imported_rows": imported.get("imported_rows"),
@@ -70,6 +75,7 @@ def build_trial_evidence(
         "trial_ledger_schema": TRIAL_LEDGER_SCHEMA,
         "run_id": run_id,
         "parent_evidence_fingerprint": parent_evidence_fingerprint,
+        "source_fingerprint": source_fingerprint,
         "journal_fingerprint": fingerprint,
         "record_count": report["metrics"].get("trades"),
         "configuration": deepcopy(configuration or {}),
