@@ -44,9 +44,10 @@ def build_trial_evidence(
     if report.get("report_schema") != "tradeguard.report.v1":
         raise ValueError("trial evidence requires tradeguard.report.v1")
     source_fingerprint = report.get("source_fingerprint")
-    if not isinstance(source_fingerprint, str):
-        raise ValueError("report is missing source_fingerprint")
-    _validate_fingerprint(source_fingerprint, "source_fingerprint")
+    if source_fingerprint is not None:
+        if not isinstance(source_fingerprint, str):
+            raise ValueError("source_fingerprint must be a 64-character SHA-256 hex digest")
+        _validate_fingerprint(source_fingerprint, "source_fingerprint")
     fingerprint = report.get("journal_fingerprint")
     if not isinstance(fingerprint, str):
         raise ValueError("report is missing journal_fingerprint")
