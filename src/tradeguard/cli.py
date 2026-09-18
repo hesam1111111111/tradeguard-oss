@@ -6,6 +6,7 @@ from dataclasses import asdict
 from math import isfinite
 from pathlib import Path
 
+from .adapters import get_import_profile
 from .analytics import analyze_by_closed_period, analyze_by_side, analyze_by_symbol, analyze_trades
 from .certification import CERTIFICATION_PASS, build_evidence_bundle, verify_evidence_bundle
 from .diagnostics import diagnose_journal
@@ -52,9 +53,10 @@ def _segments_payload(trades, temporal_period: str | None = None) -> dict:
     return payload
 
 
-def _import_payload(result) -> dict:
+def _import_payload(result, profile: str | None = None) -> dict:
     return {
-        "mode": "explicit_mapped_csv",
+        "mode": "explicit_profile_csv" if profile is not None else "explicit_mapped_csv",
+        "profile": profile,
         "complete": result.complete,
         "source_rows": result.source_rows,
         "imported_rows": result.imported_rows,
@@ -64,8 +66,11 @@ def _import_payload(result) -> dict:
     }
 
 
-def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_period: str | None = None, import_mapping: dict[str, str] | None = None) -> dict:
-    import_result = import_mapped_csv(csv_path, import_mapping) if import_mapping is not None else None
+def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskBudget | None = None, temporal_period: str | None = None, import_mapping: dict[str, str] | None = None, import_profile: str | None = None) -> dict:
+    if import_mapping is not None and import_profile is not None:
+        raise ValueError("import_mapping and import_profile are mutually exclusive")
+    resolved_mapping = dict(get_import_profile(import_profile)) if import_profile is not None else import_mapping
+    import_result = import_mapped_csv(csv_path, resolved_mapping) if resolved_mapping is not None else None
     trades = list(import_result.trades) if import_result is not None else load_trades_csv(csv_path)
     diagnostics = diagnose_journal(trades)
     import_complete = import_result is None or import_result.complete
@@ -75,7 +80,7 @@ def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskB
     return {
         "report_schema": REPORT_SCHEMA,
         "source": str(csv_path),
-        "import": _import_payload(import_result) if import_result is not None else None,
+        "import": _import_payload(import_result, import_profile) if import_result is not None else None,
         "journal_fingerprint": diagnostics.fingerprint,
         "metrics": asdict(metrics) if metrics is not None else None,
         "issues": diagnostics_payload["validation_issues"],
@@ -148,6 +153,7 @@ def main() -> None:
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
+    parser.add_argument("--import-profile", metavar="PROFILE", help="Explicit named CSV import profile; cannot be combined with --map")
     parser.add_argument("--import-preview", action="store_true", help="Preview an explicit mapped CSV import without running journal analytics")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
@@ -182,8 +188,8 @@ def main() -> None:
         parser.error("--run-id and --parent-evidence-fingerprint require --evidence-output")
 
     if args.reconcile_with:
-        if args.mappings:
-            parser.error("--map cannot be combined with --reconcile-with")
+        if args.mappings or args.import_profile:
+            parser.error("--map/--import-profile cannot be combined with --reconcile-with")
         if args.evidence_output:
             parser.error("--evidence-output cannot be combined with --reconcile-with")
         try:
@@ -208,6 +214,9 @@ def main() -> None:
             raise SystemExit(1)
         return
 
+    if args.mappings and args.import_profile:
+        parser.error("--map cannot be combined with --import-profile")
+
     import_mapping = None
     if args.mappings:
         import_mapping = {}
@@ -217,13 +226,14 @@ def main() -> None:
             import_mapping[canonical] = source
 
     if args.import_preview:
-        if import_mapping is None:
-            parser.error("--import-preview requires at least one --map")
+        if import_mapping is None and args.import_profile is None:
+            parser.error("--import-preview requires --map or --import-profile")
         try:
-            preview_result = import_mapped_csv(args.csv_path, import_mapping)
+            preview_mapping = dict(get_import_profile(args.import_profile)) if args.import_profile is not None else import_mapping
+            preview_result = import_mapped_csv(args.csv_path, preview_mapping)
         except ValueError as exc:
             parser.error(str(exc))
-        preview = _import_payload(preview_result)
+        preview = _import_payload(preview_result, args.import_profile)
         preview["preview"] = True
         if args.output:
             Path(args.output).write_text(json.dumps(preview, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
@@ -244,7 +254,7 @@ def main() -> None:
     budget_values = (args.max_trade_initial_risk, args.max_total_initial_risk)
     budget = RiskBudget(args.max_trade_initial_risk, args.max_total_initial_risk) if any(v is not None for v in budget_values) else None
     try:
-        payload = build_payload(args.csv_path, limits=limits, budget=budget, temporal_period=args.group_closed_by, import_mapping=import_mapping)
+        payload = build_payload(args.csv_path, limits=limits, budget=budget, temporal_period=args.group_closed_by, import_mapping=import_mapping, import_profile=args.import_profile)
     except ValueError as exc:
         parser.error(str(exc))
 
@@ -258,6 +268,7 @@ def main() -> None:
                 configuration={
                     "group_closed_by": args.group_closed_by,
                     "import_mapping": import_mapping,
+                    "import_profile": args.import_profile,
                     "risk_limits": asdict(limits) if limits is not None else None,
                     "risk_budget": asdict(budget) if budget is not None else None,
                 },
