@@ -6,19 +6,28 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-18
+
 ### Added
-- Trial Ledger verification now validates v1 structure and internal provenance/accounting invariants before accepting a matching fingerprint.
-- Public `validate_trial_evidence()` API for deterministic Trial Ledger contract validation.
+- Semantic contract validation for `tradeguard.reconciliation.v1`, including required member/type checks, SHA-256 digest syntax, non-negative accounting fields, delta/mismatch structure validation, and core row-accounting invariants.
+- Public `validate_reconciliation_evidence()` API for deterministic reconciliation contract checks.
+- Semantic contract validation for `tradeguard.trial-ledger.v1`, including run IDs, SHA-256 provenance fields, parent-link syntax, record-count consistency, import accounting, and supported object/list shapes.
+- Public `validate_trial_evidence()` API for deterministic Trial Ledger contract checks.
+- Regression coverage for malformed digests, negative counts, contradictory clean states, malformed reconciliation evidence, invalid Trial Ledger provenance, and import-accounting inconsistencies.
 
 ### Changed
+- Reconciliation signing and verification now fail closed for structurally malformed or logically contradictory envelopes even when a matching fingerprint could otherwise be produced.
 - Trial Ledger creation and verification now fail closed for malformed or internally contradictory evidence while preserving valid legacy `source_fingerprint: null` evidence.
+- Evidence Bundle certification automatically benefits from stronger Trial Ledger verification semantics without changing its schema identifier.
 
-### Added
-- Reconciliation evidence verification now validates required v1 structure, SHA-256 digest syntax, non-negative accounting fields, delta/mismatch shapes, and core internal invariants before accepting a fingerprint.
-- Public `validate_reconciliation_evidence()` API for deterministic contract checks.
+### Compatibility
+- `tradeguard.reconciliation.v1`, `tradeguard.trial-ledger.v1`, `tradeguard.evidence-bundle.v1`, and `tradeguard.report.v1` schema identifiers are unchanged.
+- Existing valid v0.14.0 reconciliation evidence remains accepted.
+- Existing valid Trial Ledger v1 evidence remains accepted, including legacy evidence where source-artifact provenance is unavailable and represented as `null`.
 
-### Changed
-- Reconciliation signing now fails closed for malformed or logically contradictory envelopes instead of fingerprinting them.
+### Scope
+- Verification covers deterministic internal integrity and contract consistency only; it does not attest broker/exchange authenticity, real execution, profitability, strategy quality, identity, or future safety.
+- No broker connectivity, credentials, market-data enrichment, signals, strategy logic, or order execution are introduced.
 
 ## [0.14.0] - 2026-09-18
 
