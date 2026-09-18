@@ -431,3 +431,11 @@ def test_cli_profile_introspection_rejects_csv_path(tmp_path: Path, monkeypatch)
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 2
+
+
+def test_report_source_fingerprint_hashes_exact_file_bytes(tmp_path: Path):
+    journal = _journal(tmp_path, "BTCUSDT,long,100,110,95,1\n")
+    payload = build_payload(str(journal))
+    import hashlib
+    assert payload["source_fingerprint"] == hashlib.sha256(journal.read_bytes()).hexdigest()
+    assert len(payload["source_fingerprint"]) == 64

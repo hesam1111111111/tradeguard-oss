@@ -12,7 +12,7 @@ from .certification import CERTIFICATION_PASS, build_evidence_bundle, verify_evi
 from .diagnostics import diagnose_journal
 from .evidence import build_trial_evidence
 from .importers import import_mapped_csv
-from .io import load_trades_csv
+from .io import load_trades_csv, source_file_fingerprint
 from .risk import RiskBudget, RiskLimits, aggregate_exposure, analyze_initial_risk, check_risk_limits, evaluate_risk_budget
 from .reconciliation import reconcile_journals
 
@@ -82,6 +82,7 @@ def build_payload(csv_path: str, limits: RiskLimits | None = None, budget: RiskB
     return {
         "report_schema": REPORT_SCHEMA,
         "source": str(csv_path),
+        "source_fingerprint": source_file_fingerprint(csv_path),
         "import": _import_payload(import_result, import_profile) if import_result is not None else None,
         "journal_fingerprint": diagnostics.fingerprint,
         "metrics": asdict(metrics) if metrics is not None else None,

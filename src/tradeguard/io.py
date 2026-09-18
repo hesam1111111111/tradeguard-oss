@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +13,15 @@ def _parse_optional_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
     return datetime.fromisoformat(value)
+
+
+def source_file_fingerprint(path: str | Path) -> str:
+    """Return SHA-256 for the exact bytes of a local source artifact."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_trades_csv(path: str | Path) -> list[Trade]:
