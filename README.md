@@ -39,7 +39,7 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Explicit reusable CSV import profiles with fail-closed CLI selection and deterministic profile introspection
 - Exact source-artifact SHA-256 provenance bound into reports and Trial Ledger evidence
 - Fail-closed certification CLI gate: only valid `PASS` bundles exit successfully
-- Stable additive `tradeguard.report.v1` contract with explicit compatibility rules and executable consumer-contract tests
+- Stable additive report and evidence v1 contracts with explicit compatibility rules and executable consumer-contract tests
 - Human-readable or versioned JSON CLI output
 - Deterministic JSON report export
 - Automated tests across Python 3.10–3.13 plus distribution wheel smoke-install validation
@@ -130,7 +130,7 @@ tradeguard examples/sample_journal.csv --group-closed-by month --output report.j
 
 The report retains the `tradeguard.report.v1` envelope and includes source, metrics, validation issues, journal fingerprint, structured integrity diagnostics, risk analysis, segmented analytics, and optional import provenance. Metrics are skipped when blocking validation, duplicate-record errors, or incomplete mapped import make analysis unsafe.
 
-The stable machine-readable contract and compatibility rules are documented in [`docs/report-contract-v1.md`](docs/report-contract-v1.md).
+The stable machine-readable contracts and compatibility rules are documented in [`docs/report-contract-v1.md`](docs/report-contract-v1.md), [`docs/reconciliation-contract-v1.md`](docs/reconciliation-contract-v1.md), [`docs/trial-ledger-v1.md`](docs/trial-ledger-v1.md), and [`docs/evidence-bundle-v1.md`](docs/evidence-bundle-v1.md).
 
 ## Python API
 
