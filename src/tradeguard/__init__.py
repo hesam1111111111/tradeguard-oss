@@ -16,6 +16,7 @@ from .certification import (
     CERTIFICATION_PASS,
     EVIDENCE_BUNDLE_SCHEMA,
     build_evidence_bundle,
+    validate_evidence_bundle,
     verify_evidence_bundle,
 )
 from .evidence import TRIAL_LEDGER_SCHEMA, build_trial_evidence, validate_trial_evidence, verify_trial_evidence
@@ -89,6 +90,7 @@ __all__ = [
     "sign_reconciliation_evidence",
     "trade_initial_risk",
     "trade_notional",
+    "validate_evidence_bundle",
     "validate_reconciliation_evidence",
     "validate_trial_evidence",
     "validate_trades",
