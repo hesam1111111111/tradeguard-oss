@@ -6,6 +6,26 @@ The project follows semantic versioning while the public API is still evolving.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-18
+
+### Added
+- Versioned `tradeguard.evidence-bundle.v1` deterministic offline certification contract.
+- Public `build_evidence_bundle` and `verify_evidence_bundle` APIs.
+- Explicit `PASS` / `FAIL` certification derived only from documented machine-checkable integrity checks.
+- Trial Ledger tamper verification and optional expected-parent chain validation.
+- Deterministic SHA-256 bundle fingerprints and independent bundle re-verification.
+- CLI certification export with `--certification-output` and CI-friendly verification with `--verify-certification`.
+- Regression coverage for determinism, evidence tampering, bundle tampering, parent mismatch, and CLI verification.
+- Formal Evidence Bundle v1 contract documentation.
+
+### Compatibility
+- `tradeguard.report.v1`, `tradeguard.reconciliation.v1`, and `tradeguard.trial-ledger.v1` remain additive and backward compatible.
+- Certification verifies internal evidence integrity only; it does not attest broker/exchange provenance, real execution, identity, profitability, strategy quality, or future safety.
+
+### Scope
+- Verification is local/offline and requires no credentials, remote service, brokerage connection, signals, or order execution.
+
+
 ## [0.9.0] - 2026-09-18
 
 ### Added
