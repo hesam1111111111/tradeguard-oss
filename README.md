@@ -12,7 +12,7 @@ pip install tradeguard-oss
 ```
 TradeGuard OSS is an open-source toolkit for validating trading journals, checking risk hygiene, and computing reproducible performance and journal-integrity diagnostics from closed trades.
 
-> Status: active early development (`v0.12.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
+> Status: active early development (`v0.13.0`). The project is intended for research, education, journaling, and system-quality checks. It is not financial advice and it does not place trades.
 
 ## Why TradeGuard?
 
@@ -36,7 +36,8 @@ Trading journals often contain missing stop losses, inconsistent direction label
 - Optional deterministic closed-at grouping by calendar day or month
 - Explicit mapped CSV imports with deterministic field-level diagnostics and read-only dry-run preview
 - Source-structure integrity checks for duplicate CSV headers and unexpected extra row values
-- Explicit reusable CSV import profiles with fail-closed profile selection
+- Explicit reusable CSV import profiles with fail-closed CLI selection and deterministic profile introspection
+- Exact source-artifact SHA-256 provenance bound into reports and Trial Ledger evidence
 - Fail-closed certification CLI gate: only valid `PASS` bundles exit successfully
 - Stable additive `tradeguard.report.v1` contract with explicit compatibility rules and executable consumer-contract tests
 - Human-readable or versioned JSON CLI output
