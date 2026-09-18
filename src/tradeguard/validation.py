@@ -17,7 +17,7 @@ class ValidationIssue:
 def validate_trades(trades: Iterable[Trade]) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
     for index, trade in enumerate(trades):
-        side = trade.side.lower()
+        side = trade.side.strip().lower()
         if not trade.symbol.strip():
             issues.append(ValidationIssue(index, "missing_symbol", "Trade symbol is required."))
         if side not in {"long", "short"}:
