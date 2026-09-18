@@ -459,3 +459,37 @@ def test_reconciliation_binds_exact_source_artifacts_without_changing_semantic_r
     assert payload["reference_source_fingerprint"] == hashlib.sha256(reference.read_bytes()).hexdigest()
     assert payload["candidate_source_fingerprint"] == hashlib.sha256(candidate.read_bytes()).hexdigest()
     assert payload["reference_source_fingerprint"] != payload["candidate_source_fingerprint"]
+
+
+def test_cli_reconciliation_evidence_verification_detects_tampering(tmp_path: Path, monkeypatch):
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit\n"
+    reference.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,109\n", encoding="utf-8")
+    output = tmp_path / "reconciliation.json"
+    monkeypatch.setattr("sys.argv", ["tradeguard", str(reference), "--reconcile-with", str(candidate), "--output", str(output)])
+    main()
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert len(data["reconciliation_evidence_fingerprint"]) == 64
+
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-reconciliation", str(output)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+
+    data["candidate_source_fingerprint"] = "0" * 64
+    output.write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-reconciliation", str(output)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+
+
+def test_cli_reconciliation_verification_fails_closed_for_non_object_json(tmp_path: Path, monkeypatch):
+    output = tmp_path / "invalid-reconciliation.json"
+    output.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["tradeguard", "--verify-reconciliation", str(output)])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
