@@ -148,6 +148,7 @@ def main() -> None:
     parser.add_argument("--reconcile-with", metavar="CSV", help="Compare this canonical journal with another canonical TradeGuard CSV")
     parser.add_argument("--fail-on-drift", action="store_true", help="Exit with status 1 when reconciliation detects journal drift")
     parser.add_argument("--map", dest="mappings", action="append", type=_mapping_entry, metavar="CANONICAL=SOURCE", help="Explicit source-column mapping for generic CSV import; repeat for each mapped field")
+    parser.add_argument("--import-preview", action="store_true", help="Preview an explicit mapped CSV import without running journal analytics")
     parser.add_argument("--group-closed-by", choices=("day", "month"), help="Add deterministic temporal metrics grouped by recorded closed_at")
     parser.add_argument("--max-gross-notional", type=_positive_finite)
     parser.add_argument("--max-symbol-gross-notional", type=_positive_finite)
@@ -209,6 +210,29 @@ def main() -> None:
             if canonical in import_mapping:
                 parser.error(f"duplicate canonical mapping: {canonical}")
             import_mapping[canonical] = source
+
+    if args.import_preview:
+        if import_mapping is None:
+            parser.error("--import-preview requires at least one --map")
+        try:
+            preview_result = import_mapped_csv(args.csv_path, import_mapping)
+        except ValueError as exc:
+            parser.error(str(exc))
+        preview = _import_payload(preview_result)
+        preview["preview"] = True
+        if args.output:
+            Path(args.output).write_text(json.dumps(preview, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        if args.json:
+            print(json.dumps(preview, indent=2, sort_keys=True, default=str))
+        else:
+            print("TradeGuard OSS mapped import preview")
+            print(f"Source rows: {preview['source_rows']}")
+            print(f"Would import: {preview['imported_rows']}")
+            print(f"Would reject: {preview['rejected_rows']}")
+            for item in preview["diagnostics"]:
+                field = f" field={item['field']}" if item.get("field") else ""
+                print(f"- row {item.get('source_row')}{field}: {item['code']} - {item['message']}")
+        return
 
     limit_values = (args.max_gross_notional, args.max_symbol_gross_notional, args.max_trade_notional)
     limits = RiskLimits(args.max_gross_notional, args.max_symbol_gross_notional, args.max_trade_notional) if any(v is not None for v in limit_values) else None

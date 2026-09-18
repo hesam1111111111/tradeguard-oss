@@ -61,7 +61,9 @@ def test_import_mapped_csv_rejects_invalid_rows_explicitly(tmp_path: Path):
     assert result.rejected_rows == 1
     assert result.source_rows == result.imported_rows + result.rejected_rows
     assert result.complete is False
-    assert result.diagnostics[0].code == "invalid_mapped_row"
+    assert result.diagnostics[0].code == "invalid_number"
+    assert result.diagnostics[0].field == "entry"
+    assert result.diagnostics[0].value == "not-a-number"
     assert result.diagnostics[0].source_row == 3
 
 
@@ -92,3 +94,23 @@ def test_import_mapping_rejects_unknown_or_duplicate_source_columns(tmp_path: Pa
             source,
             {"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "open_px"},
         )
+
+
+def test_import_mapped_csv_reports_field_level_diagnostics(tmp_path: Path):
+    source = _write(
+        tmp_path / "external.csv",
+        "ticker,direction,open_px,close_px,opened\n"
+        "BTCUSDT,long,bad,110,not-a-date\n"
+        ",short,50,45,2026-09-01T10:00:00\n",
+    )
+    result = import_mapped_csv(
+        source,
+        {"symbol": "ticker", "side": "direction", "entry": "open_px", "exit": "close_px", "opened_at": "opened"},
+    )
+    assert result.rejected_rows == 2
+    assert [(d.code, d.source_row, d.field) for d in result.diagnostics] == [
+        ("invalid_number", 2, "entry"),
+        ("invalid_datetime", 2, "opened_at"),
+        ("missing_required_value", 3, "symbol"),
+    ]
+    assert result.diagnostics[0].value == "bad"
