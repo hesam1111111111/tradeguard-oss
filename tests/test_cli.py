@@ -493,3 +493,75 @@ def test_cli_reconciliation_verification_fails_closed_for_non_object_json(tmp_pa
     with pytest.raises(SystemExit) as exc:
         main()
     assert exc.value.code == 1
+
+
+def test_reconciliation_verifier_rejects_logically_inconsistent_signed_payload(tmp_path: Path):
+    from tradeguard.cli import _reconciliation_payload
+    from tradeguard.reconciliation_evidence import sign_reconciliation_evidence, verify_reconciliation_evidence
+
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit\n"
+    reference.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,109\n", encoding="utf-8")
+
+    valid = _reconciliation_payload(str(reference), str(candidate))
+    unsigned = dict(valid)
+    unsigned.pop("reconciliation_evidence_fingerprint")
+    unsigned["clean"] = True
+
+    with pytest.raises(ValueError, match="reconciliation evidence violates"):
+        sign_reconciliation_evidence(unsigned)
+
+    valid["clean"] = True
+    assert not verify_reconciliation_evidence(valid)
+
+
+def test_reconciliation_verifier_rejects_invalid_digest_and_negative_counts(tmp_path: Path):
+    from tradeguard.cli import _reconciliation_payload
+    from tradeguard.reconciliation_evidence import sign_reconciliation_evidence
+
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit\n"
+    reference.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+
+    payload = _reconciliation_payload(str(reference), str(candidate))
+    unsigned = dict(payload)
+    unsigned.pop("reconciliation_evidence_fingerprint")
+
+    broken_digest = dict(unsigned)
+    broken_digest["reference_fingerprint"] = "g" * 64
+    with pytest.raises(ValueError):
+        sign_reconciliation_evidence(broken_digest)
+
+    broken_count = dict(unsigned)
+    broken_count["reference_rows"] = -1
+    with pytest.raises(ValueError):
+        sign_reconciliation_evidence(broken_count)
+
+
+def test_reconciliation_verifier_rejects_malformed_delta_and_mismatch_shapes(tmp_path: Path):
+    from tradeguard.cli import _reconciliation_payload
+    from tradeguard.reconciliation_evidence import sign_reconciliation_evidence
+
+    reference = tmp_path / "reference.csv"
+    candidate = tmp_path / "candidate.csv"
+    header = "symbol,side,entry,exit\n"
+    reference.write_text(header + "BTCUSDT,long,100,110\n", encoding="utf-8")
+    candidate.write_text(header + "BTCUSDT,long,100,109\n", encoding="utf-8")
+
+    payload = _reconciliation_payload(str(reference), str(candidate))
+    unsigned = dict(payload)
+    unsigned.pop("reconciliation_evidence_fingerprint")
+
+    malformed_delta = dict(unsigned)
+    malformed_delta["missing"] = [{"record": {}, "count": 0}]
+    with pytest.raises(ValueError):
+        sign_reconciliation_evidence(malformed_delta)
+
+    malformed_mismatch = dict(unsigned)
+    malformed_mismatch["mismatches"] = [{"identity": {}, "field": ""}]
+    with pytest.raises(ValueError):
+        sign_reconciliation_evidence(malformed_mismatch)
