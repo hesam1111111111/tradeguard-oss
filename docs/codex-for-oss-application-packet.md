@@ -53,6 +53,8 @@ Keep this answer under the form's current 500-character limit when submitting.
 
 ## External adoption evidence
 
+A dated factual snapshot is maintained in [`docs/external-evidence-snapshot.md`](external-evidence-snapshot.md).
+
 Do not invent or estimate this section.
 
 Record only observable evidence when it exists:
