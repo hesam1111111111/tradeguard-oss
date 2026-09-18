@@ -1,6 +1,6 @@
 # OSS application readiness
 
-This document tracks public-repository readiness for maintainer-support programs and similar OSS reviews. It is intentionally factual and should not claim eligibility or acceptance.
+This document tracks public-repository readiness for maintainer-support programs and similar OSS reviews. It is intentionally factual and should not claim eligibility or acceptance. A form-oriented source-of-truth is maintained in [`docs/codex-for-oss-application-packet.md`](codex-for-oss-application-packet.md).
 
 ## Repository evidence
 
